@@ -1,1 +1,1 @@
-footballdataorg=0.1.5
+footballdataorg==0.1.5
