@@ -18,3 +18,20 @@ class FDOConnector(DataConnector):
     def get_current_season(self):
         comps = self.fdo.get_competitions()
         return comps[0]['year']
+
+    def get_league_table(self, competitionData, matchday):
+        return self.fdo.get_league_table(competitionData, matchday)
+
+    def get_league_table_by_league_code(self, league_code, season, matchday):
+        competitionData = self.fdo.get_competition(league_code=league_code, season=season)
+        return self.get_league_table(competitionData, matchday)
+    
+    def get_fixtures(self, competitionData):
+        return self.fdo.get_fixtures(competitionData)
+
+    def get_fixtures_by_league_code(self, league_code, season):
+        competitionData = self.fdo.get_competition(league_code=league_code, season=season)
+        return self.get_fixtures(competitionData)
+
+    def get_team(self, team_id):
+        return self.fdo.get_team(team_id)
