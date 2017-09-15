@@ -1,3 +1,4 @@
 {
-  "tests/test_soccer.py::test": true
+  "tests/test_soccer.py::test": true,
+  "tests/test_soccer.py::test_sort_ascending": true
 }
