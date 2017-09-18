@@ -2,7 +2,7 @@
 
 from .context import soccer
 
-soc = soccer.Soccer(db_path='soccerdb/database_hallo.sqlite')
+soc = soccer.Soccer()
 writer = soccer.writers.Writer()
 fdo = soccer.data_connectors.FDOConnector()
 
