@@ -1,14 +1,18 @@
 # Sample Test passing with nose and pytest
 
+import datetime
 from .context import soccer
 
 soc = soccer.Soccer()
-writer = soccer.writers.Writer()
+writer = soccer.writers.BasicWriter()
 fdo = soccer.data_connectors.FDOConnector()
 
 def test_season():
     assert soc._get_current_season() == 2017
     
+def test_season_date():
+    assert soc._get_season_from_date(datetime.date(2015,4,29)) == 2014
+
 def test_table():
     standings = soc.get_league_table("BL1", season="2016", home=True, away=True)
     writer.league_table(standings)
