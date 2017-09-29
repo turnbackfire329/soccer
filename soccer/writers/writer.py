@@ -1,5 +1,5 @@
 """ Basic writer """
-class Writer(object):
+class BasicWriter(object):
     """
     Basic writer
     """
