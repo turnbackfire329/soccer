@@ -1,0 +1,22 @@
+Crawl:
+scrapy crawl tmcom -o tm.json
+
+Shell:
+League: 
+scrapy shell https://www.transfermarkt.com/1-bundesliga/startseite/wettbewerb/L1
+
+Season: 
+scrapy shell https://www.transfermarkt.com/1-bundesliga/startseite/wettbewerb/L1/plus/?saison_id=2017
+
+View:
+League: 
+scrapy view https://www.transfermarkt.com/1-bundesliga/startseite/wettbewerb/L1
+
+Season: 
+scrapy view https://www.transfermarkt.com/1-bundesliga/startseite/wettbewerb/L1/plus/?saison_id=2017
+
+Team:
+scrapy view https://www.transfermarkt.com/borussia-dortmund/startseite/verein/16
+
+Team Season:
+scrapy view https://www.transfermarkt.com/fc-bayern-munchen/startseite/verein/27/saison_id/2017

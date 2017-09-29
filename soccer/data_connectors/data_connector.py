@@ -1,5 +1,7 @@
 """ Basic connector that offers the soccer data interface """
 
+import datetime
+
 class DataConnector(object):
     """
     Basic connector that offers the soccer data interface
@@ -61,7 +63,20 @@ class DataConnector(object):
             standings[position]["position"] = position + 1
         return standings
 
+    def sort_fixtures(self, fixtures, ascending=True):
+        if ascending:
+            fixtures = sorted(fixtures, key=lambda x: (x["dateObject"]))
+        else:
+            fixtures = sorted(fixtures, key=lambda x: (-x["dateObject"]))
+        return fixtures
+
     def enrich_fixture(self, fixture):
+        homeId = int(fixture["_links"]["homeTeam"]["href"].split('/')[5])
+        awayId = int(fixture["_links"]["awayTeam"]["href"].split('/')[5])
+
+        fixture["homeTeamId"] = homeId
+        fixture["awayTeamId"] = awayId
+
         if fixture["result"]["goalsHomeTeam"] == fixture["result"]["goalsAwayTeam"]:
             fixture["result"]["pointsHomeTeam"] = 1
             fixture["result"]["winsHomeTeam"] = 0
@@ -126,8 +141,9 @@ class DataConnector(object):
 
             if fixture["status"] == "FINISHED":
                 fixture = self.enrich_fixture(fixture)
-                homeId = int(fixture["_links"]["homeTeam"]["href"].split('/')[5])
-                awayId = int(fixture["_links"]["awayTeam"]["href"].split('/')[5])
+                homeId = fixture["homeTeamId"]
+                awayId = fixture["awayTeamId"]
+                fixture["dateObject"] = datetime.strptime(fixture["date"], '%Y-%m-%dT%H:%M:%SZ')
 
                 if home and homeId in teams and (not head2headOnly or awayId in teams):
                     teamStandings[homeId]["home"]["goals"] =        teamStandings[homeId]["home"]["goals"] + fixture["result"]["goalsHomeTeam"]

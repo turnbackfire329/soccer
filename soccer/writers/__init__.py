@@ -1,5 +1,5 @@
 """ Writers for the soccer data pi """
 
-from .writer import Writer
+from .writer import BasicWriter
 
-__all__ = ['Writer']
+__all__ = ['BasicWriter']
