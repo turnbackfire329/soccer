@@ -39,3 +39,5 @@ nosetests.xml
 .pydevproject
 .cache
 test_local.py
+passwords.txt
+bfg.jar
