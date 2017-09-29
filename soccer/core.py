@@ -1,8 +1,9 @@
 """ Central class for the soccer data api. """
 import time
+import datetime
 
 from soccer.data_connectors import FDOConnector, SQLiteConnector
-from soccer.writers import Writer
+from soccer.writers import BasicWriter
 from soccer.exceptions import NoDataConnectorException, SoccerDBNotFoundException
 
 class Soccer(object):
@@ -40,12 +41,16 @@ class Soccer(object):
                 pass    
 
     def _get_current_season(self):
-        month = int(time.strftime("%m"))
-        year = int(time.strftime("%Y"))
-        if month < 8:
-            return year - 1
+        return self._get_season_from_date(datetime.date.today())
+
+    def _get_season_from_date(self, date):
+        if date.month < 8:
+            return date.year - 1
         else:
-            return year
+            return date.year
+
+    def _get_season_range(self, startDate, endDate):
+        return list(range(self._get_season_from_date(startDate), self._get_season_from_date(endDate) + 1))
 
     def _get_dc(self, season):
         for data_connector in self.dc:
@@ -53,7 +58,60 @@ class Soccer(object):
             if int(season) in data_connector["seasons"]:
                 return data_connector["dc"]
 
-    def get_league_table(self, competition, season=None, matchday=None, sortBy=None, ascending=None, home=True, away=True, teams=None, head2headOnly=False):
+    def get_fixtures(self, league_code=None, teams=None, startDate=None, endDate=None, future=None, count=None):
+        if league_code is not None or teams is not None:      
+            if startDate is not None and endDate is not None:
+                return self.get_fixtures_by_date(league_code, teams, startDate, endDate)
+
+            if future in (True,False) and count is not None:
+                return self.get_fixtures_by_count(league_code,teams, future, count)
+        else:
+            return []
+
+    def get_fixtures_by_date(self, league_code, teams, startDate, endDate):
+        # get season from the date range
+        fixtures = []
+        seasons = self._get_season_range(startDate, endDate)
+        for season in seasons:
+            dc = self._get_dc(season)
+            fixtures_season = dc.get_fixtures_by_league_code(league_code, season)
+            for fixture in fixtures_season:
+                fixture = dc.enrich_fixture(fixture)
+
+                if teams is None or fixture["homeTeamId"] is in teams or fixture["awayTeamId"] is in teams:
+                    if startDate <= fixture["dateObject"] and endDate >= fixture["dateObject"]:
+                        fixtures.append(fixture)
+        return fixtures
+
+    def get_fixtures_by_count(self, league_code, teams, future, count):
+        if teams is None:
+            return
+
+        fixtures = {}
+        season = self.season
+        date = datetime.datetime.now()
+        stop_search = False
+        while not stop_search:
+            dc = self._get_dc(season)
+            fixtures_season = dc.get_fixtures_by_league_code(league_code, season)
+            fixtures_season = dc.sort_fixtures(fixture_season, future)
+
+            for fixture in fixture_season:
+                fixture = dc.enrich_fixture(fixture)
+                if (future and fixture["dateObject"] > date ) or ( not future and fixture["dateObject"] < date):
+                    # TODO: add fixture to team array
+                    # team = []
+
+
+
+
+
+            
+        else:
+            # TODO: add exception
+            pass
+
+    def get_league_table(self, league_code, season=None, matchday=None, sortBy=None, ascending=None, home=True, away=True, teams=None, head2headOnly=False):
         # sanity checks
         if sortBy is None:
             sortBy = (Soccer.SORT_OPTIONS["POINTS"], Soccer.SORT_OPTIONS["DIFFERENCE"], Soccer.SORT_OPTIONS["GOALS"])
@@ -74,11 +132,11 @@ class Soccer(object):
 
         if teams is None:
             # standard case: just load the table
-            standings = dc.get_league_table_by_league_code(competition, season, matchday)
+            standings = dc.get_league_table_by_league_code(league_code, season, matchday)
 
         else:
             # load fixtures and compute table
-            fixtures = dc.get_fixtures_by_league_code(competition, season)
+            fixtures = dc.get_fixtures_by_league_code(league_code, season)
 
             standings = {
                 "standing": dc.compute_team_standings(fixtures, teams=teams, home=home, away=away, head2headOnly=head2headOnly)
