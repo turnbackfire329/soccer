@@ -143,7 +143,7 @@ class DataConnector(object):
                 fixture = self.enrich_fixture(fixture)
                 homeId = fixture["homeTeamId"]
                 awayId = fixture["awayTeamId"]
-                fixture["dateObject"] = datetime.strptime(fixture["date"], '%Y-%m-%dT%H:%M:%SZ')
+                fixture["dateObject"] = datetime.datetime.strptime(fixture["date"], '%Y-%m-%dT%H:%M:%SZ')
 
                 if home and homeId in teams and (not head2headOnly or awayId in teams):
                     teamStandings[homeId]["home"]["goals"] =        teamStandings[homeId]["home"]["goals"] + fixture["result"]["goalsHomeTeam"]
