@@ -78,7 +78,7 @@ class Soccer(object):
             for fixture in fixtures_season:
                 fixture = dc.enrich_fixture(fixture)
 
-                if teams is None or fixture["homeTeamId"] is in teams or fixture["awayTeamId"] is in teams:
+                if teams is None or fixture["homeTeamId"] in teams or fixture["awayTeamId"] in teams:
                     if startDate <= fixture["dateObject"] and endDate >= fixture["dateObject"]:
                         fixtures.append(fixture)
         return fixtures
@@ -94,22 +94,17 @@ class Soccer(object):
         while not stop_search:
             dc = self._get_dc(season)
             fixtures_season = dc.get_fixtures_by_league_code(league_code, season)
-            fixtures_season = dc.sort_fixtures(fixture_season, future)
+            fixtures_season = dc.sort_fixtures(fixtures_season, future)
 
-            for fixture in fixture_season:
+            for fixture in fixtures_season:
                 fixture = dc.enrich_fixture(fixture)
                 if (future and fixture["dateObject"] > date ) or ( not future and fixture["dateObject"] < date):
                     # TODO: add fixture to team array
                     # team = []
-
-
-
-
-
-            
-        else:
-            # TODO: add exception
-            pass
+                    pass
+                else:
+                    # TODO: add exception
+                    pass
 
     def get_league_table(self, league_code, season=None, matchday=None, sortBy=None, ascending=None, home=True, away=True, teams=None, head2headOnly=False):
         # sanity checks
