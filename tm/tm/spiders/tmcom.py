@@ -7,15 +7,25 @@ import datetime
 import string
 from tm.items import TeamItem, TeamSeasonItem, CompetitionItem, CompetitionSeasonItem, PlayerItem, FixtureItem
 from bson import ObjectId
+from scrapy.http import HtmlResponse
 
 
 class TmcomSpider(scrapy.Spider):
     name = 'tmcom'
     allowed_domains = ['transfermarkt.com']
     # start_urls = ['https://www.transfermarkt.com/1-bundesliga/startseite/wettbewerb/L1',
-    #                'https://www.transfermarkt.com/premier-league/startseite/wettbewerb/GB1',
-    #                'https://www.transfermarkt.com/2-bundesliga/startseite/wettbewerb/L2',
-    #                'https://www.transfermarkt.com/laliga/startseite/wettbewerb/ES1']
+    #               'https://www.transfermarkt.com/2-bundesliga/startseite/wettbewerb/L2',
+    #               'https://www.transfermarkt.com/3-liga/startseite/wettbewerb/L3',
+    #               'https://www.transfermarkt.com/premier-league/startseite/wettbewerb/GB1',
+    #               'https://www.transfermarkt.com/championship/startseite/wettbewerb/GB2',
+    #               'https://www.transfermarkt.com/league-one/startseite/wettbewerb/GB3',
+    #               'https://www.transfermarkt.com/serie-a/startseite/wettbewerb/IT1',
+    #               'https://www.transfermarkt.com/serie-b/startseite/wettbewerb/IT2',
+    #               'https://www.transfermarkt.com/laliga/startseite/wettbewerb/ES1',
+    #               'https://www.transfermarkt.com/laliga2/startseite/wettbewerb/ES2',
+    #               'https://www.transfermarkt.com/ligue-1/startseite/wettbewerb/FR1',
+    #               'https://www.transfermarkt.com/ligue-2/startseite/wettbewerb/FR2'
+    #              ]
     start_urls = ['https://www.transfermarkt.com/1-bundesliga/startseite/wettbewerb/L1']
 
     start_url_dict = {
@@ -30,7 +40,7 @@ class TmcomSpider(scrapy.Spider):
         '/laliga/startseite/wettbewerb/ES1': 'PD',
         '/laliga2/startseite/wettbewerb/ES2': 'SD',
         '/ligue-1/startseite/wettbewerb/FR1': 'FL1',
-        '/ligue-2/startseite/wettbewerb/FR2': 'Fl2',
+        '/ligue-2/startseite/wettbewerb/FR2': 'Fl2'
     }
     base_url = 'https://www.transfermarkt.com'
     logger = logging.getLogger()
@@ -47,7 +57,7 @@ class TmcomSpider(scrapy.Spider):
             item_competition['league_code'] = self.start_url_dict[response.url[len(self.base_url):]]
         except KeyError:
             item_competition['league_code'] = None
-        
+
         seasons = response.css('select[name=saison_id] > option ::attr(value)').extract()
         item_competition['seasons'] = seasons
         yield item_competition
@@ -55,12 +65,12 @@ class TmcomSpider(scrapy.Spider):
         for season in seasons:
             season_url = response.url + '/plus/?saison_id=' + season
             item_competition_season = CompetitionSeasonItem(
-                _id = ObjectId(),
-                league_code = item_competition['league_code'],
-                season = season,
-                url = season_url,
-                collection = 'competition_season',
-                teams = []
+                _id=ObjectId(),
+                league_code=item_competition['league_code'],
+                season=season,
+                url=season_url,
+                collection='competition_season',
+                teams=[]
             )
             yield scrapy.Request(season_url, callback=self.parseSeason, meta={
                 'item_competition_season': item_competition_season
@@ -69,29 +79,29 @@ class TmcomSpider(scrapy.Spider):
 
     def parseSeason(self, response):
         item_competition_season = response.meta['item_competition_season']
-        
+
         teams = response.css(".hauptlink.hide-for-small > a.vereinprofil_tooltip")
         for team in teams:
             item_team_season = TeamSeasonItem(
-                _id = ObjectId(),
-                name = team.css("::text").extract_first(),
-                team_id = team.css("::attr(id)").extract_first(),
-                competition = {
+                _id=ObjectId(),
+                name=team.css("::text").extract_first(),
+                team_id=team.css("::attr(id)").extract_first(),
+                competition={
                     "season": item_competition_season['season'],
                     "league_code": item_competition_season['league_code']
                 },
-                url = self.base_url + team.css("::attr(href)").extract_first(),
-                collection = "team_season"
+                url=self.base_url + team.css("::attr(href)").extract_first(),
+                collection="team_season"
             )
 
             team_url = item_team_season['url'][:item_team_season['url'].find("/saison_id")]
             item_team = TeamItem(
-                _id = ObjectId(),
-                team_id = item_team_season['team_id'],
-                name = item_team_season['name'],
-                collection = 'teams',
-                url = team_url,
-                competitions = [item_team_season["competition"]]
+                _id=ObjectId(),
+                team_id=item_team_season['team_id'],
+                name=item_team_season['name'],
+                collection='teams',
+                url=team_url,
+                competitions=[item_team_season["competition"]]
             )
 
             yield item_team
@@ -99,18 +109,18 @@ class TmcomSpider(scrapy.Spider):
             yield scrapy.Request(item_team_season['url'], callback=self.parseTeamSeason, meta={
                 'item_team_season': item_team_season
             })
-            
+
 
             item_competition_season['teams'].append({
                 'team_id': item_team_season['team_id'],
                 'name': item_team_season['name']
             })
-            #break
-        
+            break
+
         all_fixtures_url = self.base_url + response.css(".footer-links > a ::attr(href)").extract_first()
 
         yield scrapy.Request(all_fixtures_url, callback=self.parseAllFixtures, meta={
-                'item_competition_season': item_competition_season
+            'item_competition_season': item_competition_season
         })
 
         yield item_competition_season
@@ -136,14 +146,14 @@ class TmcomSpider(scrapy.Spider):
                 pass
 
             item_player = PlayerItem(
-                _id = ObjectId(),
-                name = columns.css("span.hide-for-small > a.spielprofil_tooltip ::text").extract_first(),
-                birthday = birthday,
-                country = columns.css(".flaggenrahmen ::attr(alt)").extract_first(),
-                player_id = columns.css("span.hide-for-small > a.spielprofil_tooltip ::attr(id)").extract_first(),
-                url = self.base_url + columns.css("span.hide-for-small > a.spielprofil_tooltip ::attr(href)").extract_first(),
-                collection = 'players',
-                seasons = [{
+                _id=ObjectId(),
+                name=columns.css("span.hide-for-small > a.spielprofil_tooltip ::text").extract_first(),
+                birthday=birthday,
+                country=columns.css(".flaggenrahmen ::attr(alt)").extract_first(),
+                player_id=columns.css("span.hide-for-small > a.spielprofil_tooltip ::attr(id)").extract_first(),
+                url=self.base_url + columns.css("span.hide-for-small > a.spielprofil_tooltip ::attr(href)").extract_first(),
+                collection='players',
+                seasons=[{
                     'season': item_team_season['competition']['season'],
                     'team_id': item_team_season['team_id'],
                     'team_name': item_team_season['name'],
@@ -161,7 +171,7 @@ class TmcomSpider(scrapy.Spider):
                 'name': item_player['name'],
                 'url': item_player['url']
             })
-            #break
+            break
 
         yield item_team_season
 
@@ -180,14 +190,7 @@ class TmcomSpider(scrapy.Spider):
 
             for fixture_or_date in fixtures_or_dates:
                 columns = fixture_or_date.css("td")
-                if len(columns.extract()) < 5:
-                    date_info = columns[0].css("::text").extract()
-                    if len(date_info)==3:
-                        [x,date,time] = columns[0].css("::text").extract()
-                        #time = time.translate(None, string.whitespace)
-                        #time = time.translate({ ord(c):None for c in string.whitespace })
-                        date = datetime.datetime.strptime(date, "%b %d, %Y")
-                else:
+                if len(columns.extract()) > 5:
                     for idx, column in enumerate(columns):
                         if idx == 3: # home team
                             home_team_id = column.css("a.vereinprofil_tooltip ::attr(id)").extract_first()
@@ -202,30 +205,267 @@ class TmcomSpider(scrapy.Spider):
                             away_team_name = column.css("a.vereinprofil_tooltip > img ::attr(alt)").extract_first()
 
                     item_fixture = FixtureItem(
-                        _id = ObjectId(),
-                        collection = "fixtures",
-                        date = date,
-                        matchday = matchday_no,
-                        homeTeam = {
+                        _id=ObjectId(),
+                        collection="fixtures",
+                        url=url,
+                        matchday=matchday_no,
+                        homeTeam={
                             'team_id': home_team_id,
                             'url': home_team_url,
                             'name': home_team_name
                         },
-                        awayTeam = {
+                        awayTeam={
                             'team_id': away_team_id,
                             'url': away_team_url,
                             'name': away_team_name
                         },
-                        result = {
+                        result={
                             "goalsHomeTeam": goals[0],
                             "goalsAwayTeam": goals[1]
                         },
-                        # competition = {
-                        #     'season': item_competition_season['season'],
-                        #     'league_code': item_competition_season['league_code']
-                        # }
-                        season = item_competition_season['season'],
-                        league_code= item_competition_season['league_code']
+                        season=item_competition_season['season'],
+                        league_code=item_competition_season['league_code'],
+                        stadium={},
+                        referee={},
+                        goals=[],
+                        assists=[],
+                        cards=[]
                     )
-                    yield item_fixture
-            #break
+
+                    yield scrapy.Request(url, callback=self.parseFixture, meta={
+                            'item_fixture': item_fixture
+                    })
+            break
+
+    def parseFixture(self, response):
+        item_fixture = response.meta['item_fixture']
+
+        # date and time
+        try:
+            date_information = response.css(".sb-datum.hide-for-small ::text").extract()
+            if len(date_information) > 3:
+                time = date_information[3].translate({ord(c):None for c in string.whitespace})
+                time = time.replace("|","")
+                time = time.replace("\xa0", "")
+                date = datetime.datetime.strptime(date_information[2] + " " + time, "%a, %b %d, %Y %I:%M%p")
+            else:
+                date = date_information[2]
+                date = datetime.datetime.strptime(date, "%a, %b %d, %Y")
+
+            item_fixture['date'] = date
+        except IndexError:
+            pass
+        # halftime score
+        try:
+            halftime = response.css(".sb-halbzeit ::text").extract()
+            goalsHomeTeamHalftime = halftime[1].split(":")[0]
+            goalsAwayTeamHalftime = halftime[2].split(")")[0]
+            item_fixture['result']['goalsHomeTeamHalftime'] = goalsHomeTeamHalftime
+            item_fixture['result']['goalsAwayTeamHalftime'] = goalsAwayTeamHalftime
+        except IndexError:
+            pass
+
+        #stadium
+        stadium_name = response.css(".sb-zusatzinfos > span > a ::text").extract_first()
+        item_fixture['stadium']['name'] = stadium_name
+        try:
+            stadium_url = response.css(".sb-zusatzinfos > span > a ::attr(href)").extract_first()
+            item_fixture['stadium']['url'] = self.base_url + stadium_url
+        except:
+            # no stadium url found
+            pass
+
+        # referee
+        referee_name = response.css(".sb-zusatzinfos > a ::text").extract_first()
+        if referee_name == "open":
+            referee_name = "unknown"
+
+        referee_url = response.css(".sb-zusatzinfos > a ::attr(href)").extract_first()
+        item_fixture['referee']['name'] = referee_name
+        try:
+            referee_id = referee_url.split("/")[4]
+            item_fixture['referee']['id'] = referee_id
+            item_fixture['referee']['url'] = self.base_url + referee_url
+        except (IndexError, TypeError, AttributeError):
+            pass
+
+        # goals
+        goals = response.css("[id=sb-tore] > ul > li")
+        item_fixture['goals'], item_fixture['assists'] = self.parseGoals(goals)
+
+        # cards
+        cards = response.css("[id=sb-karten] > ul > li")
+        item_fixture['cards'] = self.parseCards(cards)
+
+        # lineup
+
+        lineups = response.css(".large-6.columns:not(#schnellsuche-platz)")
+        if len(lineups) == 2:
+            item_fixture['lineups'] = {
+                'home' : self.parseLineup(lineups[0]),
+                'away': self.parseLineup(lineups[1])
+            }
+
+        yield item_fixture
+
+    def parseGoals(self, goalResponse):
+        goals = []
+        assists = []
+        minutes = goalResponse.css(".sb-sprite-uhr-klein ::attr(style)").extract()
+        for index, minute in enumerate(minutes):
+            [_,column,row] = minute.split(" ")
+            column = int(column[1:-2])
+            row = int(row[1:-3])
+            minutes[index] = int((row / 36 * 10) + (column / 36) + 1)
+
+        scores = goalResponse.css(".sb-aktion-spielstand ::text").extract()
+        team_ids = goalResponse.css(".sb-aktion-wappen > .vereinprofil_tooltip ::attr(id)").extract()
+
+        goals_and_assists = goalResponse.css(".sb-aktion-aktion").extract()
+
+        for index, action in enumerate(goals_and_assists):
+            action_response = scrapy.http.HtmlResponse(body=action, url="localhost", encoding='utf-8')
+            player_names = action_response.css("a ::text").extract()
+            player_ids = action_response.css("a ::attr(id)").extract()
+            player_urls = action_response.css("a ::attr(href)").extract()
+            goal_and_assist = action_response.css("::text").extract()
+
+            for index_goal, goal_or_assist in enumerate(goal_and_assist):
+                if index_goal == 2:
+                    newGoal = {}
+                    newGoal['minute'] = minutes[index]
+                    newGoal['goalsHomeTeam'] = scores[index].split(":")[0]
+                    newGoal['goalsAwayTeam'] = scores[index].split(":")[1]
+                    newGoal['player_name'] = player_names[0]
+                    newGoal['player_id'] = player_ids[0]
+                    newGoal['player_url'] = self.base_url + player_urls[0]
+                    newGoal['type'] = goal_or_assist.split(", ")[1]
+                    if "goal" in newGoal['type'] and "season" in newGoal['type']:
+                        newGoal['type'] = 'unknown'
+                    newGoal['team_id'] = team_ids[index]
+                    goals.append(newGoal)
+
+                if index_goal == 5:
+                    newAssist = {}
+                    newAssist['minute'] = minutes[index]
+                    newAssist['goalsHomeTeam'] = scores[index].split(":")[0]
+                    newAssist['goalsAwayTeam'] = scores[index].split(":")[1]
+                    newAssist['player_name'] = player_names[1]
+                    newAssist['player_id'] = player_ids[1]
+                    newAssist['player_url'] = self.base_url + player_urls[1]
+                    newAssist['team_id'] = team_ids[index]
+                    try:
+                        newAssist['type'] = goal_or_assist.split(", ")[1]
+                        if "assist" in newAssist['type'] and "season" in newAssist['type']:
+                            newAssist['type'] = 'unknown'
+                        assists.append(newAssist)
+                    except IndexError:
+                        # player from another team made assist (eg handball that lead to penalty)
+                        pass
+        return goals, assists
+
+    def parseCards(self, cardResponse):
+        cards = []
+
+        minutes = cardResponse.css(".sb-sprite-uhr-klein ::attr(style)").extract()
+        for index, minute in enumerate(minutes):
+            [_,column,row] = minute.split(" ")
+            column = int(column[1:-2])
+            row = int(row[1:-3])
+            minutes[index] = int((row / 36 * 10) + (column / 36) + 1)
+
+        type_of_cards = cardResponse.css(".sb-aktion-spielstand").extract()
+        team_ids = cardResponse.css(".sb-aktion-wappen > .vereinprofil_tooltip ::attr(id)").extract()
+
+        card_infos = cardResponse.css(".sb-aktion-aktion").extract()
+
+        for index, action in enumerate(card_infos):
+            newCard = {}
+            newCard['minute'] = minutes[index]
+            newCard['team_id'] = team_ids[index]
+            action_response = scrapy.http.HtmlResponse(body=action, url="localhost", encoding='utf-8')
+            newCard['player_name'] = action_response.css("a ::text").extract_first()
+            newCard['player_id'] = action_response.css("a ::attr(id)").extract_first()
+            newCard['player_url'] = action_response.css("a ::attr(href)").extract_first()
+            card_details = action_response.css("::text").extract()[1].split(", ")
+
+            if 'sb-gelb' in type_of_cards[index]:
+                newCard['type'] = 'Yellow'
+            elif 'sb-rot' in type_of_cards[index]:
+                newCard['type'] = 'Red'
+            else:
+                newCard['type'] = 'Second Yellow'
+
+            if len(card_details) == 1:
+                newCard['offense'] = 'unknown'
+            else:
+                newCard['offense'] = card_details[1]
+
+            cards.append(newCard)
+        return cards
+
+    def parseLineup(self, lineup):
+        lineup_with_system = lineup.css(".large-7.aufstellung-vereinsseite")
+        if len(lineup_with_system) == 2:
+            bench = lineup.css(".large-5.aufstellung-ersatzbank-box")[0]
+            return {
+                'system': self.parseLineupSystem(lineup_with_system[0]),
+                'lineup': self.parseLineupPlayers(lineup_with_system[1]),
+                'manager': self.parseLineupManager(bench)
+            }
+        else:
+            system = self.parseLineupSystem(lineup.css(".large-12.columns.unterueberschrift.aufstellung-unterueberschrift"))
+            playerTable = lineup.css(".aufstellung-spielerliste-table > tr > td > a")
+            playerArray = []
+            manager = {
+                'name': 'unknown'
+            }
+
+            for player in playerTable:
+                url = player.css("::attr(href)").extract_first()
+                playerDict = {
+                    'url': self.base_url + url,
+                    'name': player.css("::text").extract_first(),
+                    'id': url.split("/")[4]
+                }
+                if '/profil/trainer/' in url:
+                    manager = playerDict
+                else:
+                    playerArray.append(playerDict)
+
+            return {
+                'system': system,
+                'lineup': playerArray,
+                'manager': manager
+            }
+
+
+    def parseLineupSystem(self, system):
+        sys = system.css("::text").extract_first()
+        if sys is None:
+            return ""
+
+        return system.css("::text").extract_first().lstrip().rstrip().split(" ")[2]
+
+    def parseLineupPlayers(self, lineup):
+        players = lineup.css(".aufstellung-spieler-container > div > span > a")
+        playerArray = []
+
+        for player in players:
+            url = player.css("::attr(href)").extract_first()
+            playerDict = {
+                'url': self.base_url + url,
+                'name': player.css("::text").extract_first()
+            }
+            playerDict['playerId'] = url.split("/")[4]
+            playerArray.append(playerDict)
+        return playerArray
+
+    def parseLineupManager(self, bench):
+        manager = bench.css(".ersatzbank > tr > td > a:not(.spielprofil_tooltip)")
+        url = manager.css("::attr(href)").extract_first()
+        return {
+            'url': self.base_url + url,
+            'name': manager.css("::text").extract_first(),
+            'id': url.split("/")[4]
+        }
