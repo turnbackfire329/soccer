@@ -77,6 +77,8 @@ MONGODB_USER = "soccer"
 MONGODB_PASSWORD = ""
 
 DUPEFILTER_DEBUG = True
+
+LOG_LEVEL = "WARNING"
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See http://doc.scrapy.org/en/latest/topics/autothrottle.html
 #AUTOTHROTTLE_ENABLED = True

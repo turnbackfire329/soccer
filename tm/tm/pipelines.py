@@ -14,9 +14,7 @@ from urllib.parse import quote_plus
 from scrapy.exceptions import DropItem
 import logging
 
-COLLECTIONS = [
-            "teams", "team_season", "competitions", "competition_season", "players", "fixtures"
-        ]
+COLLECTIONS = ["teams", "team_season", "competitions", "competition_season", "players", "fixtures"]
 
 class JsonWithEncodingPipeline(object):
 
@@ -63,6 +61,7 @@ class MongoDBPipeline(object):
         find_dict = {}
         update_fields = []
         array_fields = []
+        array_replace_fields = []
         dict_fields = []
         for field in item.fields:
             if item.fields[field]['existCheck']:
@@ -71,6 +70,8 @@ class MongoDBPipeline(object):
                 update_fields.append(field)
             if item.fields[field]['isArray']:
                 array_fields.append(field)
+            if item.fields[field]['arrayReplace']:
+                array_replace_fields.append(field)
             if item.fields[field]['isDict']:
                 dict_fields.append(field)
 
@@ -90,7 +91,9 @@ class MongoDBPipeline(object):
                 set_dict = {}
                 for field in update_fields:
                     if field in array_fields:
-                        if field in dict_fields:
+                        if field in array_replace_fields:
+                                existingItem[field] = item[field]
+                        elif field in dict_fields:
                             for newEntry in item[field]:
                                 bEntryFound = False
                                 for index, existingEntry in enumerate(existingItem[field]):

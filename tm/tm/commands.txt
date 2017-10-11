@@ -20,3 +20,6 @@ scrapy view https://www.transfermarkt.com/borussia-dortmund/startseite/verein/16
 
 Team Season:
 scrapy view https://www.transfermarkt.com/fc-bayern-munchen/startseite/verein/27/saison_id/2017
+
+Fixture:
+scrapy view https://www.transfermarkt.com/spielbericht/index/spielbericht/2871495
