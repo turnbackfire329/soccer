@@ -1,0 +1,22 @@
+{
+    "_id" : ObjectId("59cfc0b3b84d750ff9d1fad8"),
+    "collection" : "fixtures",
+    "date" : ISODate("1999-08-13T00:00:00.000Z"),
+    "matchday" : "1",
+    "homeTeam" : {
+        "team_id" : "82",
+        "url" : "https://www.transfermarkt.com/vfl-wolfsburg/spielplan/verein/82/saison_id/1999",
+        "name" : "VfL Wolfsburg"
+    },
+    "awayTeam" : {
+        "team_id" : "72",
+        "url" : "https://www.transfermarkt.com/tsv-1860-munchen/spielplan/verein/72/saison_id/1999",
+        "name" : "TSV 1860 Munich"
+    },
+    "result" : {
+        "goalsHomeTeam" : "2",
+        "goalsAwayTeam" : "1"
+    },
+    "season" : "1999",
+    "league_code" : "BL1"
+}

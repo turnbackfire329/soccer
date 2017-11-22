@@ -1,0 +1,81 @@
+{
+    "_id" : ObjectId("59cfc0acb84d750ff9d1f7dd"),
+    "league_code" : "BL1",
+    "season" : "1993",
+    "url" : "https://www.transfermarkt.com/1-bundesliga/startseite/wettbewerb/L1/plus/?saison_id=1993",
+    "collection" : "competition_season",
+    "teams" : [ 
+        {
+            "team_id" : "2",
+            "name" : "1.FC Kaiserslautern"
+        }, 
+        {
+            "team_id" : "3",
+            "name" : "1. FC Köln"
+        }, 
+        {
+            "team_id" : "4",
+            "name" : "1.FC Nuremberg"
+        }, 
+        {
+            "team_id" : "16",
+            "name" : "Borussia Dortmund"
+        }, 
+        {
+            "team_id" : "18",
+            "name" : "Borussia Mönchengladbach"
+        }, 
+        {
+            "team_id" : "24",
+            "name" : "Eintracht Frankfurt"
+        }, 
+        {
+            "team_id" : "27",
+            "name" : "Bayern Munich"
+        }, 
+        {
+            "team_id" : "33",
+            "name" : "FC Schalke 04"
+        }, 
+        {
+            "team_id" : "41",
+            "name" : "Hamburger SV"
+        }, 
+        {
+            "team_id" : "48",
+            "name" : "Karlsruher SC"
+        }, 
+        {
+            "team_id" : "79",
+            "name" : "VfB Stuttgart"
+        }, 
+        {
+            "team_id" : "97",
+            "name" : "SG Wattenscheid 09"
+        }, 
+        {
+            "team_id" : "129",
+            "name" : "SG Dynamo Dresden"
+        }, 
+        {
+            "team_id" : "15",
+            "name" : "Bayer 04 Leverkusen"
+        }, 
+        {
+            "team_id" : "52",
+            "name" : "MSV Duisburg"
+        }, 
+        {
+            "team_id" : "60",
+            "name" : "SC Freiburg"
+        }, 
+        {
+            "team_id" : "86",
+            "name" : "SV Werder Bremen"
+        }, 
+        {
+            "team_id" : "497",
+            "name" : "1.FC Lokomotive Leipzig"
+        }
+    ]
+}

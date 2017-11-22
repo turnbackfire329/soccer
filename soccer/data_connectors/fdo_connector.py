@@ -15,10 +15,6 @@ class FDOConnector(DataConnector):
         DataConnector.__init__(self)
         self.fdo = FD(fd_apikey)
 
-    def get_current_season(self):
-        comps = self.fdo.get_competitions()
-        return comps[0]['year']
-
     def get_league_table(self, competitionData, matchday):
         return self.fdo.get_league_table(competitionData, matchday)
 

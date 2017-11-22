@@ -1,0 +1,30 @@
+{
+    "_links": {
+        "self": {
+            "href": "http://api.football-data.org/v1/fixtures/164242"
+        },
+        "competition": {
+            "href": "http://api.football-data.org/v1/competitions/458"
+        },
+        "homeTeam": {
+            "href": "http://api.football-data.org/v1/teams/1824"
+        },
+        "awayTeam": {
+            "href": "http://api.football-data.org/v1/teams/4"
+        }
+    },
+    "date": "2017-08-12T13:30:00Z",
+    "status": "FINISHED",
+    "matchday": 1,
+    "homeTeamName": "1. FC Rielasingen-Arlen",
+    "awayTeamName": "Borussia Dortmund",
+    "result": {
+        "goalsHomeTeam": 0,
+        "goalsAwayTeam": 4,
+        "halfTime": {
+            "goalsHomeTeam": 0,
+            "goalsAwayTeam": 2
+        }
+    },
+    "odds": null
+}

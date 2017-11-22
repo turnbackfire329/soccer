@@ -1,0 +1,185 @@
+{
+    "_id" : ObjectId("59cfc0adb84d750ff9d1f7fd"),
+    "team_id" : "2",
+    "name" : "1.FC Kaiserslautern",
+    "collection" : "teams",
+    "url" : "https://www.transfermarkt.com/1-fc-kaiserslautern/startseite/verein/2",
+    "competitions" : [ 
+        {
+            "season" : "1993",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "1994",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "1998",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "1995",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "1999",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "1997",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "2001",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "2000",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "2002",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "2004",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "2003",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "1963",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "2005",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "1965",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "1964",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "1966",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "1968",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "1970",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "1969",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "1967",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "1971",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "1974",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "1975",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "1977",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "1973",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "1976",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "1972",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "1978",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "1979",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "1984",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "1980",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "1981",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "1982",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "1983",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "1985",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "1989",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "1986",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "1988",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "1992",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "1987",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "1991",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "1990",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "2011",
+            "league_code" : "BL1"
+        }, 
+        {
+            "season" : "2010",
+            "league_code" : "BL1"
+        }
+    ]
+}
