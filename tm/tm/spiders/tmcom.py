@@ -6,7 +6,7 @@ import logging
 import datetime
 import string
 from tm.items import TeamItem, TeamSeasonItem, CompetitionItem, CompetitionSeasonItem, PlayerItem, FixtureItem
-from bson import ObjectId
+from bson.objectid import ObjectId
 from scrapy.http import HtmlResponse
 
 
@@ -121,10 +121,9 @@ class TmcomSpider(scrapy.Spider):
             self.logger.warning(f"No fixtures for this season: {item_team_season['url']}")
         else:
             all_fixtures_url = self.base_url + all_fixtures
-
-        yield scrapy.Request(all_fixtures_url, callback=self.parseAllFixtures, meta={
-            'item_competition_season': item_competition_season
-        })
+            yield scrapy.Request(all_fixtures_url, callback=self.parseAllFixtures, meta={
+                'item_competition_season': item_competition_season
+            })
 
         yield item_competition_season
 
@@ -174,7 +173,7 @@ class TmcomSpider(scrapy.Spider):
                 'name': item_player['name'],
                 'url': item_player['url']
             })
-            break
+            #break
 
         yield item_team_season
 
@@ -256,7 +255,7 @@ class TmcomSpider(scrapy.Spider):
                 date = datetime.datetime.strptime(date, "%a, %b %d, %Y")
 
             item_fixture['date'] = date
-        except IndexError:
+        except (IndexError, ValueError):
             pass
         # halftime score
         try:
