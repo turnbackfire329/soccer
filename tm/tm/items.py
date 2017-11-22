@@ -21,7 +21,7 @@ class TeamSeasonItem(Item):
     url = Field(existCheck=False, updateable=False, isArray=False, isDict=False, arrayReplace=False)
     team_id = Field(existCheck=True, updateable=False, isArray=False, isDict=False, arrayReplace=False)
     name = Field(existCheck=False, updateable=False, isArray=False, isDict=False, arrayReplace=False)
-    competition = Field(existCheck=False, updateable=False, isArray=False, isDict=True, arrayReplace=False)
+    competition = Field(existCheck=True, updateable=False, isArray=False, isDict=True, arrayReplace=False)
     players = Field(existCheck=False, updateable=True, isArray=True, isDict=True, arrayReplace=False)
 
 class CompetitionItem(Item):
