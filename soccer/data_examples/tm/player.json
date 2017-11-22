@@ -1,0 +1,32 @@
+{
+    "_id" : ObjectId("59cfc0afb84d750ff9d1fa5e"),
+    "name" : "Jörg Kässmann",
+    "birthday" : "N/A",
+    "country" : "Germany",
+    "player_id" : "19622",
+    "url" : "https://www.transfermarkt.com/jorg-kassmann/profil/spieler/19622",
+    "collection" : "players",
+    "seasons" : [ 
+        {
+            "season" : "1996",
+            "team_id" : "18",
+            "team_name" : "Borussia Mönchengladbach",
+            "position" : "Keeper",
+            "number" : "22"
+        }, 
+        {
+            "season" : "1995",
+            "team_id" : "18",
+            "team_name" : "Borussia Mönchengladbach",
+            "position" : "Keeper",
+            "number" : "22"
+        }, 
+        {
+            "season" : "1994",
+            "team_id" : "18",
+            "team_name" : "Borussia Mönchengladbach",
+            "position" : "Keeper",
+            "number" : "-"
+        }
+    ]
+}

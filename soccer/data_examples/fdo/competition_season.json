@@ -1,0 +1,25 @@
+{
+    "_links": {
+        "self": {
+            "href": "http://api.football-data.org/v1/competitions/452"
+        },
+        "teams": {
+            "href": "http://api.football-data.org/v1/competitions/452/teams"
+        },
+        "fixtures": {
+            "href": "http://api.football-data.org/v1/competitions/452/fixtures"
+        },
+        "leagueTable": {
+            "href": "http://api.football-data.org/v1/competitions/452/leagueTable"
+        }
+    },
+    "id": 452,
+    "caption": "1. Bundesliga 2017/18",
+    "league": "BL1",
+    "year": "2017",
+    "currentMatchday": 12,
+    "numberOfMatchdays": 34,
+    "numberOfTeams": 18,
+    "numberOfGames": 306,
+    "lastUpdated": "2017-11-18T19:30:30Z"
+}

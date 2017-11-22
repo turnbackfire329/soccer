@@ -2,7 +2,7 @@
 import time
 import datetime
 
-from soccer.data_connectors import FDOConnector, SQLiteConnector
+from soccer.data_connectors import FDOConnector, TMConnector
 from soccer.writers import BasicWriter
 from soccer.exceptions import NoDataConnectorException, SoccerDBNotFoundException
 
@@ -18,24 +18,32 @@ class Soccer(object):
         "DIFFERENCE": "goalDifference"
     }
 
-    def __init__(self, fdo_apikey=None, db_path=None):
+    def __init__(self, fdo_apikey=None, mongo_settings=None):
         self.season = self._get_current_season()
-        self._create_data_connectors(fdo_apikey=fdo_apikey, db_path=db_path)
+        self._create_data_connectors(fdo_apikey=fdo_apikey, mongo_settings=mongo_settings)
 
-    def _create_data_connectors(self, fdo_apikey=None, db_path=None):
+    def _create_data_connectors(self, fdo_apikey=None, mongo_settings=None):
         self.dc = []
-        fdo = FDOConnector(fdo_apikey)
-        self.dc.append({
-            "seasons": [self.season, self.season-1],
-            "dc": fdo
-        })
 
-        if db_path is not None:
+        if fdo_apikey is not None:
+            fdo = FDOConnector(fdo_apikey)
+            self.dc.append({
+                "seasons": [self.season, self.season-1],
+                "dc": fdo
+            })
+        else:
+            fdo = FDOConnector()
+            self.dc.append({
+                "seasons": [self.season, self.season-1],
+                "dc": fdo
+            })
+
+        if mongo_settings is not None:
             try:
-                db = SQLiteConnector(db_path)
+                tm = TMConnector(mongo_settings)
                 self.dc.append({
-                    "seasons": list(range(2008, self.season-1)),
-                    "dc": db
+                    "seasons": list(range(1900, self.season)),
+                    "dc": tm
                 })
             except SoccerDBNotFoundException:
                 pass    

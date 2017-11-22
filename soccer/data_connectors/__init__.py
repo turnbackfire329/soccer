@@ -1,7 +1,7 @@
 """ Data connectors for the soccer data pi """
 
 from .fdo_connector import FDOConnector
-from .sqlite_connector import SQLiteConnector
+from .tm_connector import TMConnector
 
 __all__ = ['FDOConnector',
-           'SQLiteConnector']
+           'TMConnector']

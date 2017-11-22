@@ -4,7 +4,7 @@ class NoDataConnectorException(Exception):
     '''Raise when there is no data connector for the given season'''
     def __init__(self, message, season, *args):
         self.message = message
-        super(NoDataConnectorException, self).__init__(message, season *args)
+        super(NoDataConnectorException, self).__init__(message, season, *args)
 
 class SoccerDBNotFoundException(Exception):
     '''Raise when the soccer database could not be found '''

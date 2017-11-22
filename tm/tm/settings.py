@@ -74,7 +74,7 @@ MONGODB_PORT = 27017
 MONGODB_DB = "soccer-test"
 MONGODB_AUTH_DB = "user-data"
 MONGODB_USER = "soccer"
-MONGODB_PASSWORD = ""
+MONGODB_PASSWORD = "kickoffpassshootgoal"
 
 DUPEFILTER_DEBUG = True
 

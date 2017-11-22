@@ -6,9 +6,6 @@ from .context import soccer
 soc = soccer.Soccer()
 writer = soccer.writers.BasicWriter()
 fdo = soccer.data_connectors.FDOConnector()
-
-def test_season():
-    assert soc._get_current_season() == 2017
     
 def test_season_date():
     assert soc._get_season_from_date(datetime.date(2015,4,29)) == 2014
