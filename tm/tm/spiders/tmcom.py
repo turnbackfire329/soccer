@@ -13,20 +13,20 @@ from scrapy.http import HtmlResponse
 class TmcomSpider(scrapy.Spider):
     name = 'tmcom'
     allowed_domains = ['transfermarkt.com']
-    # start_urls = ['https://www.transfermarkt.com/1-bundesliga/startseite/wettbewerb/L1',
-    #               'https://www.transfermarkt.com/2-bundesliga/startseite/wettbewerb/L2',
-    #               'https://www.transfermarkt.com/3-liga/startseite/wettbewerb/L3',
-    #               'https://www.transfermarkt.com/premier-league/startseite/wettbewerb/GB1',
-    #               'https://www.transfermarkt.com/championship/startseite/wettbewerb/GB2',
-    #               'https://www.transfermarkt.com/league-one/startseite/wettbewerb/GB3',
-    #               'https://www.transfermarkt.com/serie-a/startseite/wettbewerb/IT1',
-    #               'https://www.transfermarkt.com/serie-b/startseite/wettbewerb/IT2',
-    #               'https://www.transfermarkt.com/laliga/startseite/wettbewerb/ES1',
-    #               'https://www.transfermarkt.com/laliga2/startseite/wettbewerb/ES2',
-    #               'https://www.transfermarkt.com/ligue-1/startseite/wettbewerb/FR1',
-    #               'https://www.transfermarkt.com/ligue-2/startseite/wettbewerb/FR2'
-    #              ]
-    start_urls = ['https://www.transfermarkt.com/1-bundesliga/startseite/wettbewerb/L1']
+    start_urls = ['https://www.transfermarkt.com/1-bundesliga/startseite/wettbewerb/L1',
+                  'https://www.transfermarkt.com/2-bundesliga/startseite/wettbewerb/L2',
+                  'https://www.transfermarkt.com/3-liga/startseite/wettbewerb/L3',
+                  'https://www.transfermarkt.com/premier-league/startseite/wettbewerb/GB1',
+                  'https://www.transfermarkt.com/championship/startseite/wettbewerb/GB2',
+                  'https://www.transfermarkt.com/league-one/startseite/wettbewerb/GB3',
+                  'https://www.transfermarkt.com/serie-a/startseite/wettbewerb/IT1',
+                  'https://www.transfermarkt.com/serie-b/startseite/wettbewerb/IT2',
+                  'https://www.transfermarkt.com/laliga/startseite/wettbewerb/ES1',
+                  'https://www.transfermarkt.com/laliga2/startseite/wettbewerb/ES2',
+                  'https://www.transfermarkt.com/ligue-1/startseite/wettbewerb/FR1',
+                  'https://www.transfermarkt.com/ligue-2/startseite/wettbewerb/FR2'
+                 ]
+    # start_urls = ['https://www.transfermarkt.com/1-bundesliga/startseite/wettbewerb/L1']
 
     start_url_dict = {
         '/1-bundesliga/startseite/wettbewerb/L1': 'BL1',
@@ -116,8 +116,11 @@ class TmcomSpider(scrapy.Spider):
                 'name': item_team_season['name']
             })
             break
-
-        all_fixtures_url = self.base_url + response.css(".footer-links > a ::attr(href)").extract_first()
+        all_fixtures = response.css(".footer-links > a ::attr(href)").extract_first()
+        if all_fixtures is None:
+            self.logger.warning(f"No fixtures for this season: {item_team_season['url']}")
+        else:
+            all_fixtures_url = self.base_url + all_fixtures
 
         yield scrapy.Request(all_fixtures_url, callback=self.parseAllFixtures, meta={
             'item_competition_season': item_competition_season
@@ -128,7 +131,7 @@ class TmcomSpider(scrapy.Spider):
     def parseTeam(self, response):
         item_team = response.meta['item_team']
         yield item_team
-
+        
     def parseTeamSeason(self, response):
         item_team_season = response.meta['item_team_season']
         item_team_season['players'] = []
@@ -298,13 +301,17 @@ class TmcomSpider(scrapy.Spider):
         item_fixture['cards'] = self.parseCards(cards)
 
         # lineup
-
         lineups = response.css(".large-6.columns:not(#schnellsuche-platz)")
         if len(lineups) == 2:
             item_fixture['lineups'] = {
                 'home' : self.parseLineup(lineups[0]),
                 'away': self.parseLineup(lineups[1])
             }
+            if len(item_fixture['lineups']['home']['lineup']) != 11 or len(item_fixture['lineups']['away']['lineup']) != 11:
+                self.logger.warning(f"Lineup incomplete: {item_fixture['url']}")
+        else:
+            self.logger.warning(f"No lineups: {item_fixture['url']}")
+            item_fixture['lineups'] = {}
 
         yield item_fixture
 
@@ -415,7 +422,7 @@ class TmcomSpider(scrapy.Spider):
             }
         else:
             system = self.parseLineupSystem(lineup.css(".large-12.columns.unterueberschrift.aufstellung-unterueberschrift"))
-            playerTable = lineup.css(".aufstellung-spielerliste-table > tr > td > a")
+            playerTable = lineup.css("table > tr > td > a")
             playerArray = []
             manager = {
                 'name': 'unknown'
@@ -443,7 +450,7 @@ class TmcomSpider(scrapy.Spider):
     def parseLineupSystem(self, system):
         sys = system.css("::text").extract_first()
         if sys is None:
-            return ""
+            return "unknown"
 
         return system.css("::text").extract_first().lstrip().rstrip().split(" ")[2]
 
@@ -464,8 +471,14 @@ class TmcomSpider(scrapy.Spider):
     def parseLineupManager(self, bench):
         manager = bench.css(".ersatzbank > tr > td > a:not(.spielprofil_tooltip)")
         url = manager.css("::attr(href)").extract_first()
-        return {
-            'url': self.base_url + url,
-            'name': manager.css("::text").extract_first(),
-            'id': url.split("/")[4]
-        }
+
+        if url is None:
+            return {
+                'name': manager.css("::text").extract_first()
+            }
+        else:
+            return {
+                'url': self.base_url + url,
+                'name': manager.css("::text").extract_first(),
+                'id': url.split("/")[4]
+            }
