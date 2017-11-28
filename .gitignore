@@ -33,6 +33,7 @@ pip-log.txt
 .coverage
 .tox
 nosetests.xml
+local_test.py
 
 # Translations
 *.mo
