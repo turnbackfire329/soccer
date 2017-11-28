@@ -2,24 +2,18 @@
 import time
 import datetime
 
-from soccer.data_connectors import FDOConnector, TMConnector
-from soccer.writers import BasicWriter
-from soccer.exceptions import NoDataConnectorException, SoccerDBNotFoundException
+from .data_connectors import FDOConnector, TMConnector
+from .writers import BasicWriter
+from .exceptions import NoDataConnectorException, SoccerDBNotFoundException
+from .util import get_current_season
 
 class Soccer(object):
     """
     Central class for the soccer data api.
     """
 
-    SORT_OPTIONS = {
-        "POINTS": "points",
-        "GOALS": "goals",
-        "GOALS_AGAINST": "goalsAgainst",
-        "DIFFERENCE": "goalDifference"
-    }
-
     def __init__(self, fdo_apikey=None, mongo_settings=None):
-        self.season = self._get_current_season()
+        self.season = get_current_season()
         self._create_data_connectors(fdo_apikey=fdo_apikey, mongo_settings=mongo_settings)
 
     def _create_data_connectors(self, fdo_apikey=None, mongo_settings=None):
@@ -47,15 +41,6 @@ class Soccer(object):
                 })
             except SoccerDBNotFoundException:
                 pass    
-
-    def _get_current_season(self):
-        return self._get_season_from_date(datetime.date.today())
-
-    def _get_season_from_date(self, date):
-        if date.month < 8:
-            return date.year - 1
-        else:
-            return date.year
 
     def _get_season_range(self, startDate, endDate):
         return list(range(self._get_season_from_date(startDate), self._get_season_from_date(endDate) + 1))
@@ -86,7 +71,7 @@ class Soccer(object):
             for fixture in fixtures_season:
                 fixture = dc.enrich_fixture(fixture)
 
-                if teams is None or fixture["homeTeamId"] in teams or fixture["awayTeamId"] in teams:
+                if teams is None or fixture["homeTeam"]["team_id"] in teams or fixture["awayTeam"]["team_id"] in teams:
                     if startDate <= fixture["dateObject"] and endDate >= fixture["dateObject"]:
                         fixtures.append(fixture)
         return fixtures

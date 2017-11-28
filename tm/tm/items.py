@@ -57,7 +57,7 @@ class FixtureItem(Item):
     matchday = Field(existCheck=True, updateable=False, isArray=False, isDict=False, arrayReplace=False)
     homeTeam = Field(existCheck=True, updateable=False, isArray=False, isDict=False, arrayReplace=False)
     awayTeam = Field(existCheck=True, updateable=False, isArray=False, isDict=False, arrayReplace=False)
-    result = Field(existCheck=False, updateable=False, isArray=False, isDict=False, arrayReplace=False)
+    result = Field(existCheck=False, updateable=True, isArray=False, isDict=True, arrayReplace=False)
     season = Field(existCheck=True, updateable=False, isArray=False, isDict=False, arrayReplace=False)
     league_code = Field(existCheck=True, updateable=False, isArray=False, isDict=False, arrayReplace=False)
     url = Field(existCheck=False, updateable=False, isArray=False, isDict=False, arrayReplace=False)

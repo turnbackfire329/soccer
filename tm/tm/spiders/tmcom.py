@@ -40,7 +40,7 @@ class TmcomSpider(scrapy.Spider):
         '/laliga/startseite/wettbewerb/ES1': 'PD',
         '/laliga2/startseite/wettbewerb/ES2': 'SD',
         '/ligue-1/startseite/wettbewerb/FR1': 'FL1',
-        '/ligue-2/startseite/wettbewerb/FR2': 'Fl2'
+        '/ligue-2/startseite/wettbewerb/FR2': 'FL2'
     }
     base_url = 'https://www.transfermarkt.com'
     logger = logging.getLogger()
@@ -62,6 +62,8 @@ class TmcomSpider(scrapy.Spider):
         item_competition['seasons'] = seasons
         yield item_competition
 
+        seasons = [self.settings.get("SEASON")] if self.settings.get("SEASON") is not None else seasons
+        self.logger.info(f"Scraping {len(seasons)} seasons")
         for season in seasons:
             season_url = response.url + '/plus/?saison_id=' + season
             item_competition_season = CompetitionSeasonItem(
@@ -115,7 +117,7 @@ class TmcomSpider(scrapy.Spider):
                 'team_id': item_team_season['team_id'],
                 'name': item_team_season['name']
             })
-            break
+            #break
         all_fixtures = response.css(".footer-links > a ::attr(href)").extract_first()
         if all_fixtures is None:
             self.logger.warning(f"No fixtures for this season: {item_team_season['url']}")
@@ -200,44 +202,48 @@ class TmcomSpider(scrapy.Spider):
                             home_team_name = column.css("a.vereinprofil_tooltip > img ::attr(alt)").extract_first()
                         elif idx == 4: # result
                             goals = column.css("a ::text").extract_first().split(":")
+                            if len(goals) < 2:
+                                goals = ["-","-"]
                             url = self.base_url + column.css("a ::attr(href)").extract_first()
                         elif idx == 5: # away team
                             away_team_id = column.css("a.vereinprofil_tooltip ::attr(id)").extract_first()
                             away_team_url = self.base_url + column.css("a.vereinprofil_tooltip ::attr(href)").extract_first()
                             away_team_name = column.css("a.vereinprofil_tooltip > img ::attr(alt)").extract_first()
+                    try:
+                        item_fixture = FixtureItem(
+                            _id=ObjectId(),
+                            collection="fixtures",
+                            url=url,
+                            matchday=matchday_no,
+                            homeTeam={
+                                'team_id': home_team_id,
+                                'url': home_team_url,
+                                'name': home_team_name
+                            },
+                            awayTeam={
+                                'team_id': away_team_id,
+                                'url': away_team_url,
+                                'name': away_team_name
+                            },
+                            result={
+                                "goalsHomeTeam": goals[0],
+                                "goalsAwayTeam": goals[1]
+                            },
+                            season=item_competition_season['season'],
+                            league_code=item_competition_season['league_code'],
+                            stadium={},
+                            referee={},
+                            goals=[],
+                            assists=[],
+                            cards=[]
+                        )
 
-                    item_fixture = FixtureItem(
-                        _id=ObjectId(),
-                        collection="fixtures",
-                        url=url,
-                        matchday=matchday_no,
-                        homeTeam={
-                            'team_id': home_team_id,
-                            'url': home_team_url,
-                            'name': home_team_name
-                        },
-                        awayTeam={
-                            'team_id': away_team_id,
-                            'url': away_team_url,
-                            'name': away_team_name
-                        },
-                        result={
-                            "goalsHomeTeam": goals[0],
-                            "goalsAwayTeam": goals[1]
-                        },
-                        season=item_competition_season['season'],
-                        league_code=item_competition_season['league_code'],
-                        stadium={},
-                        referee={},
-                        goals=[],
-                        assists=[],
-                        cards=[]
-                    )
-
-                    yield scrapy.Request(url, callback=self.parseFixture, meta={
+                        yield scrapy.Request(url, callback=self.parseFixture, meta={
                             'item_fixture': item_fixture
-                    })
-            break
+                        })
+                    except (IndexError, ValueError):
+                        pass
+            #break
 
     def parseFixture(self, response):
         item_fixture = response.meta['item_fixture']
