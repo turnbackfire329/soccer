@@ -5,7 +5,7 @@ import datetime
 from .data_connectors import FDOConnector, TMConnector
 from .writers import BasicWriter
 from .exceptions import NoDataConnectorException, SoccerDBNotFoundException
-from .util import get_current_season
+from .util import get_current_season, SORT_OPTIONS
 
 class Soccer(object):
     """
@@ -102,7 +102,7 @@ class Soccer(object):
     def get_league_table(self, league_code, season=None, matchday=None, sortBy=None, ascending=None, home=True, away=True, teams=None, head2headOnly=False):
         # sanity checks
         if sortBy is None:
-            sortBy = (Soccer.SORT_OPTIONS["POINTS"], Soccer.SORT_OPTIONS["DIFFERENCE"], Soccer.SORT_OPTIONS["GOALS"])
+            sortBy = (SORT_OPTIONS["POINTS"], SORT_OPTIONS["DIFFERENCE"], SORT_OPTIONS["GOALS"])
 
         if ascending is None:
             ascending = (-1, -1, -1)

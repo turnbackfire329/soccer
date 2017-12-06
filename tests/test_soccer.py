@@ -23,7 +23,7 @@ def test_sort_descending():
         {"points": 5, "goalDifference": 4, "goals": 8},
         {"points": 5, "goalDifference": 5, "goals": 7}
     ]
-    assert fdo.sort_league_table(standings, (soccer.Soccer.SORT_OPTIONS["POINTS"], soccer.Soccer.SORT_OPTIONS["DIFFERENCE"], soccer.Soccer.SORT_OPTIONS["GOALS"])) == [
+    assert fdo.sort_league_table(standings, (soccer.util.SORT_OPTIONS["POINTS"], soccer.util.SORT_OPTIONS["DIFFERENCE"], soccer.util.SORT_OPTIONS["GOALS"])) == [
         {'goalDifference': 4, 'goals': 7, 'points': 11, 'position': 1},
         {'goalDifference': 4, 'goals': 7, 'points': 8, 'position': 2},
         {'goalDifference': 5, 'goals': 7, 'points': 5, 'position': 3},
