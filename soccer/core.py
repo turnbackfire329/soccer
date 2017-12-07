@@ -13,6 +13,7 @@ class Soccer(object):
     """
 
     def __init__(self, fdo_apikey=None, mongo_settings=None):
+        self.dc = None
         self.season = get_current_season()
         self._create_data_connectors(fdo_apikey=fdo_apikey, mongo_settings=mongo_settings)
 
@@ -23,7 +24,9 @@ class Soccer(object):
             try:
                 self.dc = TMConnector(mongo_settings)
             except SoccerDBNotFoundException:
-                pass    
+                pass
+        else:
+            self.dc = FDOConnector()   
 
     def get_fixtures(self, league_code=None, teams=None, startDate=None, endDate=None, future=None, count=None):
         if league_code is not None or teams is not None:      
