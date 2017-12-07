@@ -5,7 +5,7 @@ import datetime
 from .data_connectors import FDOConnector, TMConnector
 from .writers import BasicWriter
 from .exceptions import NoDataConnectorException, SoccerDBNotFoundException
-from .util import get_current_season, SORT_OPTIONS
+from .util import get_current_season, get_season_range, SORT_OPTIONS
 
 class Soccer(object):
     """
@@ -17,39 +17,13 @@ class Soccer(object):
         self._create_data_connectors(fdo_apikey=fdo_apikey, mongo_settings=mongo_settings)
 
     def _create_data_connectors(self, fdo_apikey=None, mongo_settings=None):
-        self.dc = []
-
         if fdo_apikey is not None:
-            fdo = FDOConnector(fdo_apikey)
-            self.dc.append({
-                "seasons": [self.season, self.season-1],
-                "dc": fdo
-            })
-        else:
-            fdo = FDOConnector()
-            self.dc.append({
-                "seasons": [self.season, self.season-1],
-                "dc": fdo
-            })
-
-        if mongo_settings is not None:
+            self.dc = FDOConnector(fdo_apikey)
+        elif mongo_settings is not None:
             try:
-                tm = TMConnector(mongo_settings)
-                self.dc.append({
-                    "seasons": list(range(1900, self.season)),
-                    "dc": tm
-                })
+                self.dc = TMConnector(mongo_settings)
             except SoccerDBNotFoundException:
                 pass    
-
-    def _get_season_range(self, startDate, endDate):
-        return list(range(self._get_season_from_date(startDate), self._get_season_from_date(endDate) + 1))
-
-    def _get_dc(self, season):
-        for data_connector in self.dc:
-            print(data_connector["seasons"])
-            if int(season) in data_connector["seasons"]:
-                return data_connector["dc"]
 
     def get_fixtures(self, league_code=None, teams=None, startDate=None, endDate=None, future=None, count=None):
         if league_code is not None or teams is not None:      
@@ -64,12 +38,11 @@ class Soccer(object):
     def get_fixtures_by_date(self, league_code, teams, startDate, endDate):
         # get season from the date range
         fixtures = []
-        seasons = self._get_season_range(startDate, endDate)
+        seasons = get_season_range(startDate, endDate)
         for season in seasons:
-            dc = self._get_dc(season)
-            fixtures_season = dc.get_fixtures_by_league_code(league_code, season)
+            fixtures_season = self.dc.get_fixtures_by_league_code(league_code, season)
             for fixture in fixtures_season:
-                fixture = dc.enrich_fixture(fixture)
+                fixture = self.dc.enrich_fixture(fixture)
 
                 if teams is None or fixture["homeTeam"]["team_id"] in teams or fixture["awayTeam"]["team_id"] in teams:
                     if startDate <= fixture["dateObject"] and endDate >= fixture["dateObject"]:
@@ -85,12 +58,11 @@ class Soccer(object):
         date = datetime.datetime.now()
         stop_search = False
         while not stop_search:
-            dc = self._get_dc(season)
-            fixtures_season = dc.get_fixtures_by_league_code(league_code, season)
-            fixtures_season = dc.sort_fixtures(fixtures_season, future)
+            fixtures_season = self.dc.get_fixtures_by_league_code(league_code, season)
+            fixtures_season = self.dc.sort_fixtures(fixtures_season, future)
 
             for fixture in fixtures_season:
-                fixture = dc.enrich_fixture(fixture)
+                fixture = self.dc.enrich_fixture(fixture)
                 if (future and fixture["dateObject"] > date ) or ( not future and fixture["dateObject"] < date):
                     # TODO: add fixture to team array
                     # team = []
@@ -98,6 +70,9 @@ class Soccer(object):
                 else:
                     # TODO: add exception
                     pass
+
+    def get_table(self, league_code, teams=None, timeFrame=None):
+        return self.dc.get_table(league_code=league_code, teams=teams, timeFrame=timeFrame)
 
     def get_league_table(self, league_code, season=None, matchday=None, sortBy=None, ascending=None, home=True, away=True, teams=None, head2headOnly=False):
         # sanity checks
@@ -113,26 +88,24 @@ class Soccer(object):
         if not home and not away:
             return {}
 
-        dc = self._get_dc(season)
-
-        if dc is None:
+        if self.dc is None:
             raise NoDataConnectorException(f'There is no data connector for {season}', season)
 
         if teams is None:
             # standard case: just load the table
-            standings = dc.get_league_table_by_league_code(league_code, season, matchday)
+            standings = self.dc.get_league_table_by_league_code(league_code, season, matchday)
 
         else:
             # load fixtures and compute table
-            fixtures = dc.get_fixtures_by_league_code(league_code, season)
+            fixtures = self.dc.get_fixtures_by_league_code(league_code, season)
 
             standings = {
-                "standing": dc.compute_team_standings(fixtures, teams=teams, home=home, away=away, head2headOnly=head2headOnly)
+                "standing": self.dc.compute_team_standings(fixtures, teams=teams, home=home, away=away, head2headOnly=head2headOnly)
             }
 
         if home and not away:
-            standings = dc.convert_league_table(standings)
+            standings = self.dc.convert_league_table(standings)
         elif not home and away:
-            standings = dc.convert_league_table(standings, home=False)
-        standings["standing"] = dc.sort_league_table(standings["standing"], sortBy, ascending)
+            standings = self.dc.convert_league_table(standings, home=False)
+        standings["standing"] = self.dc.sort_league_table(standings["standing"], sortBy, ascending)
         return standings

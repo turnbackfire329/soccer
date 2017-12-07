@@ -22,6 +22,10 @@ def get_season_from_date(date):
 def get_current_season():
     return get_season_from_date(datetime.date.today())
 
+def get_current_decade():
+    current_season = get_season_from_date(datetime.date.today())
+    current_decade = int(str(current_season)[:-1] + "0")
+    return current_decade
 
 def get_empty_team_standings():
     return {
@@ -48,3 +52,6 @@ def get_empty_team_standings():
             "losses": 0
         }
     }
+
+def get_season_range(startDate, endDate):
+    return list(range(get_season_from_date(startDate), get_season_from_date(endDate) + 1))
