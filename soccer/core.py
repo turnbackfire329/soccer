@@ -3,7 +3,7 @@ import time
 import datetime
 
 from .data_connectors import FDOConnector, TMConnector
-from .writers import BasicWriter
+from .writers import BasicWriter, HTMLWriter, JSONWriter, BootstrapWriter
 from .exceptions import NoDataConnectorException, SoccerDBNotFoundException
 from .util import get_current_season, get_season_range, SORT_OPTIONS
 
@@ -12,10 +12,11 @@ class Soccer(object):
     Central class for the soccer data api.
     """
 
-    def __init__(self, fdo_apikey=None, mongo_settings=None):
+    def __init__(self, fdo_apikey=None, mongo_settings=None, writer='basic'):
         self.dc = None
         self.season = get_current_season()
         self._create_data_connectors(fdo_apikey=fdo_apikey, mongo_settings=mongo_settings)
+        self._get_writer(writer)
 
     def _create_data_connectors(self, fdo_apikey=None, mongo_settings=None):
         if fdo_apikey is not None:
@@ -27,6 +28,18 @@ class Soccer(object):
                 pass
         else:
             self.dc = FDOConnector()   
+
+    def _get_writer(self, writer):
+        if writer == 'basic':
+            self.writer = BasicWriter()
+        elif writer == 'json':
+            self.writer = JSONWriter()
+        elif writer == 'html':
+            self.writer = HTMLWriter()
+        elif writer == 'bootstrap':
+            self.writer = BootstrapWriter()
+        else:
+            self.writer = BasicWriter()
 
     def get_fixtures(self, league_code=None, teams=None, startDate=None, endDate=None, future=None, count=None):
         if league_code is not None or teams is not None:      
@@ -75,7 +88,7 @@ class Soccer(object):
                     pass
 
     def get_table(self, league_code, teams=None, timeFrame=None):
-        return self.dc.get_table(league_code=league_code, teams=teams, timeFrame=timeFrame)
+        return self.writer.league_table(self.dc.get_table(league_code=league_code, teams=teams, timeFrame=timeFrame))
 
     def get_league_table(self, league_code, season=None, matchday=None, sortBy=None, ascending=None, home=True, away=True, teams=None, head2headOnly=False):
         # sanity checks

@@ -12,7 +12,6 @@ def test_season_date():
 
 def test_table():
     standings = soc.get_league_table("BL1", season="2016", home=True, away=True)
-    writer.league_table(standings["standing"])
     assert standings["standing"][2]["goals"] == 72
 
 def test_sort_descending():
@@ -31,7 +30,4 @@ def test_sort_descending():
         {'goalDifference': 4, 'goals': 7, 'points': 5, 'position': 5}
     ]
 
-def test_table_restricted_teams():
-    standings = soc.get_league_table("BL1", season="2016", home=True, away=True, teams=[4,5,6], head2headOnly=True)
-    writer.league_table(standings["standing"])
-    assert True
+

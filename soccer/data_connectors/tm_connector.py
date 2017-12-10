@@ -11,6 +11,7 @@ from ..util import get_current_season
 
 TIME_FRAME_TYPES = ("date", "season", "matchday")
 
+
 class TMConnector(DataConnector):
     """
     This connector loads data from the mongodb that stores the transfermarkt.com data
@@ -32,6 +33,7 @@ class TMConnector(DataConnector):
                 "fixtures": self.db["fixtures"],
                 "tables": self.db["tables"]
             }
+            self.logger.info(f"Mongo DB connection initialized")
 
     def get_league_table(self, competitionData, matchday):
         pass
@@ -56,31 +58,34 @@ class TMConnector(DataConnector):
             findDict["$and"] = [{"$or":[{ "homeTeam.id": { "$in": teams }}, { "awayTeam.id": { "$in": teams }}]}]
 
         if timeFrame["type"] == "date":
-            findDict["date"] = {"$and":[{ "$gte": timeFrame["date_from"] }, { "$lte": timeFrame["date_to"] }]}
+            if "$and" in findDict:
+                findDict["$and"].append({"date":{ "$gte": timeFrame["date_from"]}}, {"date":{ "$lte": timeFrame["date_to"]}})
+            else: 
+                findDict["$and"] = [{"date":{ "$gte": timeFrame["date_from"]}}, {"date":{ "$lte": timeFrame["date_to"]}}]
         elif timeFrame["type"] == "season":
             if "$and" in findDict:
-                findDict.append({'season': {'$gte': timeFrame["season_from"]}},{'season': {'$lte': timeFrame["season_to"]}})
+                findDict["$and"].append({'season': {'$gte': str(timeFrame["season_from"])}},{'season': {'$lte': str(timeFrame["season_to"])}})
             else: 
-                findDict["$and"] = [{'season': {'$gte': timeFrame["season_from"]}},{'season': {'$lte': timeFrame["season_to"]}}]
+                findDict["$and"] = [{'season': {'$gte': str(timeFrame["season_from"])}},{'season': {'$lte': str(timeFrame["season_to"])}}]
         elif timeFrame["type"] == "matchday":
             if "$and" in findDict:
-                findDict.append({'season': {'$gte': timeFrame["season_from"]}},{'season': {'$lte': timeFrame["season_to"]}})
+                findDict["$and"].append({'season': {'$gte': str(timeFrame["season_from"])}},{'season': {'$lte': str(timeFrame["season_to"])}})
             else: 
-                findDict["$and"] = [{'season': {'$gte': timeFrame["season_from"]}},{'season': {'$lte': timeFrame["season_to"]}}]
+                findDict["$and"] = [{'season': {'$gte': str(timeFrame["season_from"])}},{'season': {'$lte': str(timeFrame["season_to"])}}]
 
             findMatchday = [{
-                "$and": [{"season": { "$gt": timeFrame["season_from"] }}, {"season": { "$lt": timeFrame["season_to"] }}]
+                "$and": [{"season": { "$gt": str(timeFrame["season_from"]) }}, {"season": { "$lt": str(timeFrame["season_to"])}}]
             },{
-                "$and": [{"season": { "$eq": timeFrame["season_from"] }}, {"matchday": { "$gte": timeFrame["matchday_from"] }}]
+                "$and": [{"season": { "$eq": str(timeFrame["season_from"]) }}, {"matchday": { "$gte": str(timeFrame["matchday_from"])}}]
             },{
-                "$and": [{"season": { "$eq": timeFrame["season_to"] }}, {"matchday": { "$lte": timeFrame["matchday_to"] }}]
+                "$and": [{"season": { "$eq": str(timeFrame["season_to"]) }}, {"matchday": { "$lte": str(timeFrame["matchday_to"])}}]
             }]
 
             if "$and" in findDict:
                 findDict["$and"].append({"$or":findMatchday})
             else:
                 findDict["$or"] = findMatchday
-    
+        self.logger.debug(f"Looking for fixtures with the following findDict: {findDict}") 
         fixtures = list(self.collections["fixtures"].find(findDict))
         return fixtures
 
@@ -99,15 +104,19 @@ class TMConnector(DataConnector):
 
         if existingTable is None or (existingTable["status"] == "pending" and existingTable["next_update"] < datetime.datetime.now()):
             table_id = None
+            self.logger.debug(f"Table needs to be created") 
             if existingTable is not None and existingTable["status"] == "pending":
                 table_id = existingTable["_id"]
             table = self.create_table(league_code, teams, timeFrame, table_id)
             return table
         else:
+            self.logger.debug(f"Table found in database") 
             return existingTable
 
     def create_table(self, league_code, teams=None, timeFrame=None, table_id=None):
+        self.logger.debug(f"Creating table ...") 
         timeFrame = self._check_timeFrame(timeFrame)
+        self.logger.debug(f"Loading fixtures from timeframe {timeFrame}") 
 
         fixtures = self.get_fixtures_by_timeFrame(league_code, teams, timeFrame)
 
@@ -120,7 +129,9 @@ class TMConnector(DataConnector):
                 if next_update is None or next_update > fixture["dateObject"]:
                     next_update = fixture["dateObject"]
 
+        self.logger.debug(f"Computing standings ...") 
         standings = self.compute_team_standings(fixtures, teams)
+        self.logger.debug(f"Sorting ...") 
         standings = self.sort_league_table(standings)
         table = {
             "league_code": league_code,
@@ -131,11 +142,13 @@ class TMConnector(DataConnector):
             "next_update": next_update
         }
 
+        self.logger.debug(f"Storing in database ...") 
         if table_id is not None:
             self.collections["tables"].update_one({'_id': table_id}, {'$set': table})
         else:
             self.collections["tables"].insert(table)
 
+        self.logger.debug(f"Table created") 
         return table
 
     def enrich_fixture(self, fixture):
@@ -168,7 +181,7 @@ class TMConnector(DataConnector):
                     if "season_from" in timeFrame and "season_to" in timeFrame:
                         bValid = True
                 elif timeFrameType == "matchday":
-                    if "season_from" in timeFrame and "season_to" in timeFrame and "matchday_from" in timeFrame and "matchday_from" in timeFrame:
+                    if "season_from" in timeFrame and "season_to" in timeFrame and "matchday_from" in timeFrame and "matchday_to" in timeFrame:
                         bValid = True
         
         if bValid == False:
