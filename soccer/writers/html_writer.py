@@ -8,7 +8,11 @@ class HTMLWriter(BasicWriter):
     def __init__(self):
         pass
 
-    def league_table(self, standings):
-        print("    %-25s %2s %2s %2s %2s %7s %3s" % ("Team", "P", "W", "D", "L", "Goals","Pts"))
-        for team in standings["standing"]:
-            print("%2s. %-25s %2s %2s %2s %2s %3s:%-3s %3s" % (team["position"], team["teamName"], team["playedGames"], team["wins"], team["draws"], team["losses"], team["goals"], team["goalsAgainst"], team["points"]))
+    def league_table(self, table):
+        html = "<table><thead><tr><th>#</th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>Goals</th><th>Pts</th></tr></thead><tbody>"
+
+        for team in table["standings"]:
+            html = html + f"<tr><th>{team['position']}</th><th>{team['teamName']}</th><th>{team['playedGames']}</th><th>{team['wins']}</th><th>{team['draws']}</th><th>{team['losses']}</th><th>{team['goals']}:{team['goalsAgainst']}</th><th>{team['points']}</th></tr>"
+
+        html = html + "</tbody></table>"
+        return html

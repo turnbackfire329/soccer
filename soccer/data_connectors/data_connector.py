@@ -1,6 +1,7 @@
 """ Basic connector that offers the soccer data interface """
 
 import datetime
+import logging
 from ..util import get_empty_team_standings, SORT_OPTIONS
 
 
@@ -9,7 +10,7 @@ class DataConnector(object):
     Basic connector that offers the soccer data interface
     """
     def __init__(self):
-        pass
+        self.logger = logging.getLogger(__name__)
 
     def get_league_table(self, competitionData, matchday):
         pass

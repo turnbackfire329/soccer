@@ -2,7 +2,6 @@
 
 import datetime
 
-
 SORT_OPTIONS = {
     "POINTS": "points",
     "GOALS": "goals",
