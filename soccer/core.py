@@ -41,16 +41,6 @@ class Soccer(object):
         else:
             self.writer = BasicWriter()
 
-    def get_fixtures(self, league_code=None, teams=None, startDate=None, endDate=None, future=None, count=None):
-        if league_code is not None or teams is not None:      
-            if startDate is not None and endDate is not None:
-                return self.get_fixtures_by_date(league_code, teams, startDate, endDate)
-
-            if future in (True,False) and count is not None:
-                return self.get_fixtures_by_count(league_code,teams, future, count)
-        else:
-            return []
-
     def get_fixtures_by_date(self, league_code, teams, startDate, endDate):
         # get season from the date range
         fixtures = []
@@ -90,6 +80,12 @@ class Soccer(object):
     def get_table(self, league_code, teams=None, timeFrame=None):
         return self.writer.league_table(self.dc.get_table(league_code=league_code, teams=teams, timeFrame=timeFrame))
 
+    def get_fixtures(self, league_code, teams=None, timeFrame=None):
+        return self.writer.fixture_list(self.dc.get_fixtures(league_code=league_code, teams=teams, timeFrame=timeFrame))
+
+    def get_current_matchday(self, competition):
+        return self.dc.get_current_matchday(competition)
+    
     def get_league_table(self, league_code, season=None, matchday=None, sortBy=None, ascending=None, home=True, away=True, teams=None, head2headOnly=False):
         # sanity checks
         if sortBy is None:
