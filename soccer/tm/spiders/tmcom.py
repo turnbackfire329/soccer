@@ -5,7 +5,10 @@ import string
 import logging
 import datetime
 import string
-from tm.items import TeamItem, TeamSeasonItem, CompetitionItem, CompetitionSeasonItem, PlayerItem, FixtureItem
+from pymongo import MongoClient
+from scrapy.conf import settings
+from urllib.parse import quote_plus
+from ..items import TeamItem, TeamSeasonItem, CompetitionItem, CompetitionSeasonItem, PlayerItem, FixtureItem
 from bson.objectid import ObjectId
 from scrapy.http import HtmlResponse
 
@@ -24,9 +27,8 @@ class TmcomSpider(scrapy.Spider):
                   'https://www.transfermarkt.com/laliga/startseite/wettbewerb/ES1',
                   'https://www.transfermarkt.com/laliga2/startseite/wettbewerb/ES2',
                   'https://www.transfermarkt.com/ligue-1/startseite/wettbewerb/FR1',
-                  'https://www.transfermarkt.com/ligue-2/startseite/wettbewerb/FR2'
+                  'https://www.transfermarkt.com/ligue-2/startseite/wettbewerb/FR2',
                  ]
-    # start_urls = ['https://www.transfermarkt.com/1-bundesliga/startseite/wettbewerb/L1']
 
     start_url_dict = {
         '/1-bundesliga/startseite/wettbewerb/L1': 'BL1',
@@ -40,12 +42,13 @@ class TmcomSpider(scrapy.Spider):
         '/laliga/startseite/wettbewerb/ES1': 'PD',
         '/laliga2/startseite/wettbewerb/ES2': 'SD',
         '/ligue-1/startseite/wettbewerb/FR1': 'FL1',
-        '/ligue-2/startseite/wettbewerb/FR2': 'FL2'
+        '/ligue-2/startseite/wettbewerb/FR2': 'FL2',
     }
     base_url = 'https://www.transfermarkt.com'
     logger = logging.getLogger()
 
     def parse(self, response):
+        self.logger.debug(f"Crawl settings: {self.settings.attributes.keys()}")
         item_competition = CompetitionItem(
                 _id = ObjectId(),
                 collection="competitions"
@@ -62,22 +65,48 @@ class TmcomSpider(scrapy.Spider):
         item_competition['seasons'] = seasons
         yield item_competition
 
-        seasons = [self.settings.get("SEASON")] if self.settings.get("SEASON") is not None else seasons
-        self.logger.info(f"Scraping {len(seasons)} seasons")
-        for season in seasons:
-            season_url = response.url + '/plus/?saison_id=' + season
-            item_competition_season = CompetitionSeasonItem(
-                _id=ObjectId(),
-                league_code=item_competition['league_code'],
-                season=season,
-                url=season_url,
-                collection='competition_season',
-                teams=[]
-            )
-            yield scrapy.Request(season_url, callback=self.parseSeason, meta={
-                'item_competition_season': item_competition_season
-            })
-            #break
+        if self.settings.get("UPDATE_FIXTURES") is not None and self.settings.get("UPDATE_FIXTURES") == 'TRUE':
+            self.logger.info("Updating existing fixtures. Loading updateable fixtures from the database ...")
+            uri = "mongodb://%s:%s@%s:%s" % (
+                quote_plus(settings['MONGODB_USER']), quote_plus(settings['MONGODB_PASSWORD']), settings['MONGODB_SERVER'], settings['MONGODB_PORT'])
+
+            client = MongoClient(uri, authSource=settings['MONGODB_AUTH_DB'])
+            db = client[settings['MONGODB_DB']]
+            update_fixtures = list(db["fixtures"].find(
+                {
+                    'league_code': item_competition['league_code'],
+                    'result.goalsHomeTeam':'-', 
+                    'date': { '$lte': datetime.datetime.now() - datetime.timedelta(hours=2)}
+                }
+            ))
+
+            self.logger.info(f"Number of updateable fixtures: {len(update_fixtures)}")
+            for fixture in update_fixtures:
+                yield scrapy.Request(fixture['url'], callback=self.parseFixture, meta={
+                    'item_fixture': FixtureItem(fixture)
+                })
+        else:
+            seasons = [self.settings.get("SEASON")] if self.settings.get("SEASON") is not None else seasons
+
+            if len(seasons) == 1:
+                self.logger.info(f"Scraping season {seasons[0]}")
+            else:
+                self.logger.info(f"Scraping {len(seasons)} seasons")
+
+            for season in seasons:
+                season_url = response.url + '/plus/?saison_id=' + season
+                item_competition_season = CompetitionSeasonItem(
+                    _id=ObjectId(),
+                    league_code=item_competition['league_code'],
+                    season=int(season),
+                    url=season_url,
+                    collection='competition_season',
+                    teams=[]
+                )
+                yield scrapy.Request(season_url, callback=self.parseSeason, meta={
+                    'item_competition_season': item_competition_season
+                })
+                #break
 
     def parseSeason(self, response):
         item_competition_season = response.meta['item_competition_season']
@@ -214,7 +243,7 @@ class TmcomSpider(scrapy.Spider):
                             _id=ObjectId(),
                             collection="fixtures",
                             url=url,
-                            matchday=matchday_no,
+                            matchday=int(matchday_no),
                             homeTeam={
                                 'team_id': home_team_id,
                                 'url': home_team_url,
@@ -263,6 +292,17 @@ class TmcomSpider(scrapy.Spider):
             item_fixture['date'] = date
         except (IndexError, ValueError):
             pass
+
+        # fulltime score
+        try: 
+            fulltime = response.css(".sb-endstand ::text").extract()[0].translate({ord(c):None for c in string.whitespace})
+            goalsHomeTeam = fulltime.split(":")[0]
+            goalsAwayTeam = fulltime.split(":")[1]
+            item_fixture['result']['goalsHomeTeam'] = goalsHomeTeam
+            item_fixture['result']['goalsAwayTeam'] = goalsAwayTeam
+        except IndexError:
+            pass
+
         # halftime score
         try:
             halftime = response.css(".sb-halbzeit ::text").extract()

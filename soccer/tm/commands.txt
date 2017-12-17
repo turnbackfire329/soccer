@@ -22,4 +22,4 @@ Team Season:
 scrapy view https://www.transfermarkt.com/fc-bayern-munchen/startseite/verein/27/saison_id/2017
 
 Fixture:
-scrapy view https://www.transfermarkt.com/spielbericht/index/spielbericht/2871495
+scrapy view https://www.transfermarkt.com/spielbericht/index/spielbericht/2871872
