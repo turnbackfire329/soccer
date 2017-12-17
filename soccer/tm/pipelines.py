@@ -5,7 +5,6 @@
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: http://doc.scrapy.org/en/latest/topics/item-pipeline.html
 
-
 import json
 import codecs
 from pymongo import MongoClient
@@ -121,6 +120,7 @@ class MongoDBPipeline(object):
                             for key in item[field]:
                                 existingItem[field][key] = item[field][key]
                             set_dict[field] = existingItem[field]
+                            print(existingItem[field])
                         else:
                             self.logger.info(f"Updating field {field} of item {existingItem['_id']} in collection {item['collection']}. New value: '{item[field]}'")
                             set_dict[field] = item[field]
