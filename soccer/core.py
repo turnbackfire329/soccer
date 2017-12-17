@@ -77,8 +77,11 @@ class Soccer(object):
                     # TODO: add exception
                     pass
 
-    def get_table(self, league_code, teams=None, timeFrame=None):
-        return self.writer.league_table(self.dc.get_table(league_code=league_code, teams=teams, timeFrame=timeFrame))
+    def get_table(self, league_code, teams=None, timeFrame=None, rank=None):
+        if rank is None:
+            return self.writer.league_table(self.dc.get_table(league_code=league_code, teams=teams, timeFrame=timeFrame))
+        else:
+            return self.writer.rank_table(self.dc.get_table(league_code=league_code, teams=teams, timeFrame=timeFrame), rank)
 
     def get_fixtures(self, league_code, teams=None, timeFrame=None):
         return self.writer.fixture_list(self.dc.get_fixtures(league_code=league_code, teams=teams, timeFrame=timeFrame))
