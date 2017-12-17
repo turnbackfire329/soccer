@@ -11,3 +11,9 @@ class JSONWriter(BasicWriter):
 
     def league_table(self, table):
         return table
+
+    def rank_table(self, table, position):
+        return table
+
+    def fixture_list(self, fixtures):
+        return fixtures
