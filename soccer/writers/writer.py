@@ -1,10 +1,13 @@
 """ Basic writer """
+
+import logging
+
 class BasicWriter(object):
     """
     Basic writer
     """
     def __init__(self):
-        pass
+        self.logger = logging.getLogger(__name__)
 
     def league_table(self, table):
         print("    %-25s %2s %2s %2s %2s %7s %3s" % ("Team", "P", "W", "D", "L", "Goals","Pts"))

@@ -4,7 +4,7 @@ that is part of this package
 """
 import datetime
 from urllib.parse import quote_plus
-from pymongo import MongoClient
+from pymongo import MongoClient, ASCENDING
 from .data_connector import DataConnector
 from ..exceptions import InvalidTimeFrameException
 from ..util import get_current_season
@@ -41,13 +41,10 @@ class TMConnector(DataConnector):
     def get_league_table_by_league_code(self, league_code, season, matchday):
         pass
     
-    def get_fixtures(self, competitionData):
-        pass
-
     def get_fixtures_by_league_code(self, league_code, season):
         pass
 
-    def get_fixtures_by_timeFrame(self, league_code, teams=None, timeFrame=None):
+    def get_fixtures(self, league_code, teams=None, timeFrame=None):
         timeFrame = self._check_timeFrame(timeFrame=timeFrame)
 
         findDict = {
@@ -59,34 +56,47 @@ class TMConnector(DataConnector):
 
         if timeFrame["type"] == "date":
             if "$and" in findDict:
-                findDict["$and"].append({"date":{ "$gte": timeFrame["date_from"]}}, {"date":{ "$lte": timeFrame["date_to"]}})
+                findDict["$and"].extend([
+                    {"date":{ "$gte": timeFrame["date_from"]}}, 
+                    {"date":{ "$lte": timeFrame["date_to"]}},
+                ])
             else: 
                 findDict["$and"] = [{"date":{ "$gte": timeFrame["date_from"]}}, {"date":{ "$lte": timeFrame["date_to"]}}]
         elif timeFrame["type"] == "season":
             if "$and" in findDict:
-                findDict["$and"].append({'season': {'$gte': str(timeFrame["season_from"])}},{'season': {'$lte': str(timeFrame["season_to"])}})
+                findDict["$and"].extend([
+                    {'season': {'$gte': timeFrame["season_from"]}},
+                    {'season': {'$lte': timeFrame["season_to"]}}
+                ])
             else: 
-                findDict["$and"] = [{'season': {'$gte': str(timeFrame["season_from"])}},{'season': {'$lte': str(timeFrame["season_to"])}}]
+                findDict["$and"] = [{'season': {'$gte': timeFrame["season_from"]}},{'season': {'$lte': timeFrame["season_to"]}}]
         elif timeFrame["type"] == "matchday":
             if "$and" in findDict:
-                findDict["$and"].append({'season': {'$gte': str(timeFrame["season_from"])}},{'season': {'$lte': str(timeFrame["season_to"])}})
+                findDict["$and"].extend([
+                    {'season': {'$gte': timeFrame["season_from"]}},
+                    {'season': {'$lte': timeFrame["season_to"]}},
+                ])
             else: 
-                findDict["$and"] = [{'season': {'$gte': str(timeFrame["season_from"])}},{'season': {'$lte': str(timeFrame["season_to"])}}]
+                findDict["$and"] = [{'season': {'$gte': timeFrame["season_from"]}},{'season': {'$lte': timeFrame["season_to"]}}]
 
-            findMatchday = [{
-                "$and": [{"season": { "$gt": str(timeFrame["season_from"]) }}, {"season": { "$lt": str(timeFrame["season_to"])}}]
-            },{
-                "$and": [{"season": { "$eq": str(timeFrame["season_from"]) }}, {"matchday": { "$gte": str(timeFrame["matchday_from"])}}]
-            },{
-                "$and": [{"season": { "$eq": str(timeFrame["season_to"]) }}, {"matchday": { "$lte": str(timeFrame["matchday_to"])}}]
-            }]
-
-            if "$and" in findDict:
+            if timeFrame["season_from"] != timeFrame["season_to"]:
+                findMatchday = [{
+                    "$and": [{"season": { "$gt": timeFrame["season_from"]}}, {"season": { "$lt": timeFrame["season_to"]}}]
+                },{
+                    "$and": [{"season": { "$eq": timeFrame["season_from"]}}, {"matchday": { "$gte": timeFrame["matchday_from"]}}]
+                },{
+                    "$and": [{"season": { "$eq": timeFrame["season_to"]}}, {"matchday": { "$lte": timeFrame["matchday_to"]}}]
+                }]
                 findDict["$and"].append({"$or":findMatchday})
             else:
-                findDict["$or"] = findMatchday
+                findDict["$and"].extend([
+                    {"matchday": { "$lte": timeFrame["matchday_to"]}},
+                    {"matchday": { "$gte": timeFrame["matchday_from"]}},
+                ])
+
         self.logger.debug(f"Looking for fixtures with the following findDict: {findDict}") 
         fixtures = list(self.collections["fixtures"].find(findDict))
+        fixtures = sorted(fixtures, key=lambda x: x["date"])
         return fixtures
 
 
@@ -95,6 +105,13 @@ class TMConnector(DataConnector):
 
     def get_table(self, league_code, teams=None, timeFrame=None):
         timeFrame = self._check_timeFrame(timeFrame)
+
+        findDict = {
+            "league_code": league_code,
+            "teams": teams,
+            "timeFrame": timeFrame
+        }
+        self.logger.debug(f"Looking for a table with the following findDict: {findDict}")  
 
         existingTable = self.collections["tables"].find_one({
             "league_code": league_code,
@@ -118,16 +135,22 @@ class TMConnector(DataConnector):
         timeFrame = self._check_timeFrame(timeFrame)
         self.logger.debug(f"Loading fixtures from timeframe {timeFrame}") 
 
-        fixtures = self.get_fixtures_by_timeFrame(league_code, teams, timeFrame)
+        fixtures = self.get_fixtures(league_code, teams, timeFrame)
+
+        self.logger.debug(f"Found {len(fixtures)} fixtures")
 
         table_status = "done",
         next_update = None
         for fixture in fixtures:
             fixture = self.enrich_fixture(fixture)
-            if fixture["dateObject"] > datetime.datetime.now():
+            if fixture["dateObject"] > datetime.datetime.now() - datetime.timedelta(hours=2):
                 table_status = "pending"
-                if next_update is None or next_update > fixture["dateObject"]:
-                    next_update = fixture["dateObject"]
+                if next_update is None:
+                    next_update = datetime.datetime.now() + datetime.timedelta(minutes=5)
+                    break
+
+        if table_status == "pending":
+            self.logger.debug(f"The table needs to be updated at {next_update}")
 
         self.logger.debug(f"Computing standings ...") 
         standings = self.compute_team_standings(fixtures, teams)
@@ -158,6 +181,13 @@ class TMConnector(DataConnector):
         else:
             fixture["dateObject"] = datetime.datetime(datetime.MINYEAR, 1, 1)
         return fixture
+
+    def get_current_matchday(self, league_code):
+        fixture = list(self.collections["fixtures"].find({'league_code':league_code,"date": {"$gte": datetime.datetime.now()}}).sort("date", ASCENDING).limit(1))
+        if len(fixture) == 0:
+            return 1
+        else:
+            return fixture[0]["matchday"]
 
     def _check_timeFrame(self, timeFrame=None):
         bValid = False
