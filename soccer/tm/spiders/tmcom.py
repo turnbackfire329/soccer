@@ -75,8 +75,10 @@ class TmcomSpider(scrapy.Spider):
             update_fixtures = list(db["fixtures"].find(
                 {
                     'league_code': item_competition['league_code'],
-                    'result.goalsHomeTeam':'-', 
-                    'date': { '$lte': datetime.datetime.now() - datetime.timedelta(hours=2)}
+                    '$and': [
+                        {'date': { '$lte': datetime.datetime.now()}},
+                        {'date': { '$gte': datetime.datetime.now() - datetime.timedelta(days=2)}},
+                    ],
                 }
             ))
 
