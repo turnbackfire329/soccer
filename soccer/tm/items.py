@@ -53,7 +53,7 @@ class PlayerItem(Item):
 class FixtureItem(Item):
     _id = Field(existCheck=False, updateable=False, isArray=False, isDict=False, arrayReplace=False)
     collection = Field(existCheck=False, updateable=False, isArray=False, isDict=False, arrayReplace=False)
-    date = Field(existCheck=False, updateable=False, isArray=False, isDict=False, arrayReplace=False)
+    date = Field(existCheck=False, updateable=True, isArray=False, isDict=False, arrayReplace=False)
     matchday = Field(existCheck=True, updateable=False, isArray=False, isDict=False, arrayReplace=False)
     homeTeam = Field(existCheck=True, updateable=False, isArray=False, isDict=False, arrayReplace=False)
     awayTeam = Field(existCheck=True, updateable=False, isArray=False, isDict=False, arrayReplace=False)

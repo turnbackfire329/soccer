@@ -293,7 +293,7 @@ class TmcomSpider(scrapy.Spider):
 
             item_fixture['date'] = date
         except (IndexError, ValueError):
-            pass
+            item_fixture['date'] = datetime.datetime(item_fixture['season'], 12, 31)
 
         # fulltime score
         try: 

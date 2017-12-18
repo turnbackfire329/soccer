@@ -120,7 +120,6 @@ class MongoDBPipeline(object):
                             for key in item[field]:
                                 existingItem[field][key] = item[field][key]
                             set_dict[field] = existingItem[field]
-                            print(existingItem[field])
                         else:
                             self.logger.info(f"Updating field {field} of item {existingItem['_id']} in collection {item['collection']}. New value: '{item[field]}'")
                             set_dict[field] = item[field]
