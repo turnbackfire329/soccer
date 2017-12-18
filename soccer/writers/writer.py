@@ -19,5 +19,8 @@ class BasicWriter(object):
         for team in table["standings"]:
             print("%2s. %-25s %2s %2s %2s %2s %3s:%-3s %3s" % (team["position"], team["teamName"], team["playedGames"], team["wins"], team["draws"], team["losses"], team["goals"], team["goalsAgainst"], team["points"]))
 
+    def title_table(self, title_table):
+        print(title_table)
+
     def fixture_list(self, fixtures):
-        pass          
+        print(fixtures)          

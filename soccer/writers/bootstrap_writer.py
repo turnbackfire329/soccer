@@ -30,9 +30,9 @@ class BootstrapWriter(BasicWriter):
         else:
             position = 0
 
-        if position > 0:
+        if position > 2:
             html = html + f"<tr><td colspan='9' class='text-center'>...</td></tr>"
-            
+
         for pos in range(max(0,position-2), min(position+3, len(table["standings"]))):
             team = table["standings"][pos]
             if pos == position:
@@ -40,9 +40,18 @@ class BootstrapWriter(BasicWriter):
             else:
                 html = html + f"<tr><td>{team['position']}</td><td>{team['teamName']}</td><td>{team['playedGames']}</td><td class='hidden-xs'>{team['wins']}</td><td class='hidden-xs'>{team['draws']}</td><td class='hidden-xs'>{team['losses']}</td><td>{team['goals']}:{team['goalsAgainst']}</td><td class='hidden-xs'>{team['goals']-team['goalsAgainst']}</td><td>{team['points']}</td></tr>"
 
-        if position < len(table["standings"]) - 1:
+        if position < len(table["standings"]) - 3:
             html = html + f"<tr><td colspan='9' class='text-center'>...</td></tr>"
 
+        html = html + "</tbody></table>"
+        return html
+
+    def title_table(self, title_table):
+        html = "<table class='table table-striped table-hover table-condensed'><thead><tr><th>Team</th><th>#</th><th>Seasons</th></tr></thead><tbody>"
+        
+        for team in title_table:
+            html = html + f"<tr><td>{team['teamName']}</td><td>{team['numberOfTitles']}</td><td>{', '.join(str(season) for season in team['seasons'])}</td></tr>"
+        
         html = html + "</tbody></table>"
         return html
 

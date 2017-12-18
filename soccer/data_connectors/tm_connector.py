@@ -9,9 +9,6 @@ from .data_connector import DataConnector
 from ..exceptions import InvalidTimeFrameException
 from ..util import get_current_season
 
-TIME_FRAME_TYPES = ("date", "season", "matchday")
-
-
 class TMConnector(DataConnector):
     """
     This connector loads data from the mongodb that stores the transfermarkt.com data
@@ -96,7 +93,7 @@ class TMConnector(DataConnector):
 
         self.logger.debug(f"Looking for fixtures with the following findDict: {findDict}") 
         fixtures = list(self.collections["fixtures"].find(findDict))
-        fixtures = sorted(fixtures, key=lambda x: x["date"])
+        fixtures.sort(key=lambda x: x["date"])
         return fixtures
 
 
@@ -119,16 +116,79 @@ class TMConnector(DataConnector):
             "timeFrame": timeFrame
         })
 
-        if existingTable is None or (existingTable["status"] == "pending" and existingTable["next_update"] < datetime.datetime.now()):
+        if existingTable is None or (existingTable["status"] == self.TABLE_STATUS['pending'] and existingTable["next_update"] < datetime.datetime.now()):
             table_id = None
             self.logger.debug(f"Table needs to be created") 
-            if existingTable is not None and existingTable["status"] == "pending":
+            if existingTable is not None and existingTable["status"] == self.TABLE_STATUS['pending']:
                 table_id = existingTable["_id"]
             table = self.create_table(league_code, teams, timeFrame, table_id)
             return table
         else:
             self.logger.debug(f"Table found in database") 
             return existingTable
+
+    def get_title_table(self, league_code, teams=None, timeFrame=None, rank=None):
+        # title table entry
+        # {  
+        #   teamName: 'abc',
+        #   numberOfTitles: #,
+        #   seasons: []
+        # }
+
+        if rank is None:
+            rank = 0
+        elif rank == 'won':
+            rank = 0
+
+        title_table = {}
+
+        if timeFrame is None:
+            timeFrame = {
+                'type': 'season',
+                'season_from': 1900,
+                'season_to': get_current_season()
+            }
+
+        seasons = self._get_seasons_from_timeframe(timeFrame)
+        for season in seasons:
+            temp_timeframe = {
+                'type': 'season',
+                'season_from': season,
+                'season_to': season
+            }
+            table = self.get_table(league_code,teams, temp_timeframe)
+
+            if table is not None and table['status'] == self.TABLE_STATUS['done']:
+                temp_rank = rank
+                if rank == 'last':
+                    temp_rank = len(table['standings']) - 1
+                elif type(rank) == int:
+                    temp_rank = min(rank, len(table['standings'])) - 1
+
+                table_entry = table['standings'][rank]
+                if table_entry['teamName'] in title_table:
+                    title_table_entry = title_table[table_entry['teamName']]
+                    title_table_entry['numberOfTitles'] = title_table_entry['numberOfTitles'] + 1
+                    title_table_entry['seasons'].append(season+1)
+                    title_table_entry['seasons'].sort()
+                    title_table[table_entry['teamName']] = title_table_entry
+                else:
+                    title_table_entry = {
+                        'teamName': table_entry['teamName'],
+                        'numberOfTitles': 1,
+                        'seasons': [season+1]
+                    }
+                    title_table[table_entry['teamName']] = title_table_entry
+
+        title_table = list(title_table.values())
+
+        if title_table is None:
+            title_table = []
+        else:
+            title_table.sort(key=lambda x: x['numberOfTitles'], reverse=True)
+
+        return title_table
+
 
     def create_table(self, league_code, teams=None, timeFrame=None, table_id=None):
         self.logger.debug(f"Creating table ...") 
@@ -139,17 +199,21 @@ class TMConnector(DataConnector):
 
         self.logger.debug(f"Found {len(fixtures)} fixtures")
 
-        table_status = "done",
+        if len(fixtures) == 0:
+            return None
+
+        table_status = self.TABLE_STATUS['done']
         next_update = None
+
         for fixture in fixtures:
             fixture = self.enrich_fixture(fixture)
             if fixture["dateObject"] > datetime.datetime.now() - datetime.timedelta(hours=2):
-                table_status = "pending"
+                table_status = self.TABLE_STATUS['pending']
                 if next_update is None:
                     next_update = datetime.datetime.now() + datetime.timedelta(minutes=5)
                     break
 
-        if table_status == "pending":
+        if table_status == self.TABLE_STATUS['pending']:
             self.logger.debug(f"The table needs to be updated at {next_update}")
 
         self.logger.debug(f"Computing standings ...") 
@@ -188,35 +252,5 @@ class TMConnector(DataConnector):
             return 1
         else:
             return fixture[0]["matchday"]
-
-    def _check_timeFrame(self, timeFrame=None):
-        bValid = False
-
-        if timeFrame is None:
-            current_season = str(get_current_season())
-            timeFrame = {
-                "type": "season",
-                "season_from": current_season,
-                "season_to": current_season
-            }
-            bValid = True
-        elif "type" in timeFrame:
-            timeFrameType = timeFrame["type"]
-
-            if timeFrameType in TIME_FRAME_TYPES:
-                if timeFrameType == "date":
-                    if "date_from" in timeFrame and "date_to" in timeFrame:
-                        bValid = True
-                elif timeFrameType == "season":
-                    if "season_from" in timeFrame and "season_to" in timeFrame:
-                        bValid = True
-                elif timeFrameType == "matchday":
-                    if "season_from" in timeFrame and "season_to" in timeFrame and "matchday_from" in timeFrame and "matchday_to" in timeFrame:
-                        bValid = True
-        
-        if bValid == False:
-            raise InvalidTimeFrameException(f"Invalid time frame given: {timeFrame}", timeFrame)
-        else:
-            return timeFrame
 
         
