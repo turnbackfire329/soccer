@@ -36,6 +36,15 @@ class HTMLWriter(BasicWriter):
         html = html + "</tbody></table>"
         return html
 
+    def title_table(self, title_table):
+        html = "<table><thead><tr><th>Team</th><th># Wins</th><th>Seasons</th></tr></thead><tbody>"
+
+        for team in title_table:
+            html = html + f"<tr><td>{team['teamName']}</td><td>{team['numberOfTitles']}</td><td>{team['seasons']}</td></tr>"
+
+        html = html + "</tbody></table>"
+        return html
+
     def fixture_list(self, fixtures):
         html = "<table><thead><tr><th>Home</th><th colspan='3'>Result</th><th>Away</th></tr></thead><tbody>"
 

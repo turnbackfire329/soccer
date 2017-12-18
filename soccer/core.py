@@ -89,6 +89,10 @@ class Soccer(object):
     def get_current_matchday(self, competition):
         return self.dc.get_current_matchday(competition)
     
+    def get_rank(self, league_code, teams=None, timeFrame=None, rank=None):
+        return self.writer.title_table(self.dc.get_title_table(league_code=league_code, teams=teams, timeFrame=timeFrame, rank=rank))
+
+
     def get_league_table(self, league_code, season=None, matchday=None, sortBy=None, ascending=None, home=True, away=True, teams=None, head2headOnly=False):
         # sanity checks
         if sortBy is None:

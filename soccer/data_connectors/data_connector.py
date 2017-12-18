@@ -2,13 +2,20 @@
 
 import datetime
 import logging
-from ..util import get_empty_team_standings, SORT_OPTIONS
+from ..util import get_current_season, get_empty_team_standings, SORT_OPTIONS
 
 
 class DataConnector(object):
     """
     Basic connector that offers the soccer data interface
     """
+
+    TIME_FRAME_TYPES = ("date", "season", "matchday")
+    TABLE_STATUS = {
+        'done': 'done',
+        'pending': 'pending',
+    }
+
     def __init__(self):
         self.logger = logging.getLogger(__name__)
 
@@ -60,7 +67,7 @@ class DataConnector(object):
                 t = t + (ascending[i] * x[sortBy[i]],)
             return t
 
-        standings = sorted(standings, key=lambda x: getSortTuple(x, sortBy, ascending))
+        standings.sort(key=lambda x: getSortTuple(x, sortBy, ascending))
 
         for position in range(0, len(standings)):
             standings[position]["position"] = position + 1
@@ -68,9 +75,9 @@ class DataConnector(object):
 
     def sort_fixtures(self, fixtures, ascending=True):
         if ascending:
-            fixtures = sorted(fixtures, key=lambda x: (x["dateObject"]))
+            fixtures.sort(key=lambda x: (x["dateObject"]))
         else:
-            fixtures = sorted(fixtures, key=lambda x: (-x["dateObject"]))
+            fixtures.sort(key=lambda x: (-x["dateObject"]))
         return fixtures
 
     def enrich_fixture(self, fixture):
@@ -158,3 +165,41 @@ class DataConnector(object):
                     teamStandings[awayId]["losses"] =               teamStandings[awayId]["losses"] + int(fixture["result"]["lossesAwayTeam"])
                     teamStandings[awayId]["goalDifference"] =       teamStandings[awayId]["goals"] - teamStandings[awayId]["goalsAgainst"]
         return list(teamStandings.values())
+
+    def _get_seasons_from_timeframe(self, timeFrame):
+        timeFrame = self._check_timeFrame(timeFrame)
+
+        if timeFrame["type"] == 'season' or timeFrame["type"] == 'matchday':
+            return range(timeFrame['season_from'], timeFrame['season_to'] + 1)
+        else:
+            return range(timeFrame['date_from'].year, timeFrame['date_to'].year + 1)
+
+    def _check_timeFrame(self, timeFrame=None):
+        bValid = False
+
+        if timeFrame is None:
+            current_season = str(get_current_season())
+            timeFrame = {
+                "type": "season",
+                "season_from": current_season,
+                "season_to": current_season
+            }
+            bValid = True
+        elif "type" in timeFrame:
+            timeFrameType = timeFrame["type"]
+
+            if timeFrameType in self.TIME_FRAME_TYPES:
+                if timeFrameType == "date":
+                    if "date_from" in timeFrame and "date_to" in timeFrame:
+                        bValid = True
+                elif timeFrameType == "season":
+                    if "season_from" in timeFrame and "season_to" in timeFrame:
+                        bValid = True
+                elif timeFrameType == "matchday":
+                    if "season_from" in timeFrame and "season_to" in timeFrame and "matchday_from" in timeFrame and "matchday_to" in timeFrame:
+                        bValid = True
+        
+        if bValid == False:
+            raise InvalidTimeFrameException(f"Invalid time frame given: {timeFrame}", timeFrame)
+        else:
+            return timeFrame
