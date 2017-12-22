@@ -194,6 +194,13 @@ class TMConnector(DataConnector):
         self.logger.debug(f"Creating table ...") 
         timeFrame = self._check_timeFrame(timeFrame)
         self.logger.debug(f"Loading fixtures from timeframe {timeFrame}") 
+        competition = self.get_competition(league_code)
+        if competition is None:
+            tie_break_rules = DEFAULT_TIE_BREAK_RULES
+        else:
+            tie_break_rules = competition['metadata']['tie_break_rules']
+
+        point_rule = self._get_point_rule_from_timeframe(competition, timeFrame)
 
         fixtures = self.get_fixtures(league_code, teams, timeFrame)
 
@@ -216,17 +223,18 @@ class TMConnector(DataConnector):
         if table_status == self.TABLE_STATUS['pending']:
             self.logger.debug(f"The table needs to be updated at {next_update}")
 
-        self.logger.debug(f"Computing standings ...") 
-        standings = self.compute_team_standings(fixtures, teams)
+        self.logger.debug(f"Computing standings with point rule {point_rule} ...") 
+        standings = self.compute_team_standings(fixtures, teams, point_rule=point_rule)
         self.logger.debug(f"Sorting ...") 
-        standings = self.sort_league_table(standings)
+        standings = self.sort_league_table(standings, fixtures, point_rule=point_rule, tie_break_rules=tie_break_rules) 
         table = {
             "league_code": league_code,
             "teams": teams,
             "timeFrame": timeFrame,
             "standings": standings,
             "status": table_status,
-            "next_update": next_update
+            "next_update": next_update,
+            "point_rule": point_rule,
         }
 
         self.logger.debug(f"Storing in database ...") 
@@ -253,4 +261,6 @@ class TMConnector(DataConnector):
         else:
             return fixture[0]["matchday"]
 
-        
+     
+    def get_competition(self, league_code):
+        return self.collections["competitions"].find_one({'league_code': league_code})

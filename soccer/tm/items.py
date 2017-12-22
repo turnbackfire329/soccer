@@ -31,6 +31,7 @@ class CompetitionItem(Item):
     icon = Field(existCheck=False, updateable=True, isArray=False, isDict=False, arrayReplace=False)
     league_code = Field(existCheck=True, updateable=False, isArray=False, isDict=False, arrayReplace=False)
     seasons = Field(existCheck=False, updateable=True, isArray=True, isDict=False, arrayReplace=False)
+    metadata = Field(existCheck=False, updateable=True, isArray=False, isDict=True, arrayReplace=False)
 
 class CompetitionSeasonItem(Item):
     _id = Field(existCheck=False, updateable=False, isArray=False, isDict=False, arrayReplace=False)
