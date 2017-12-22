@@ -78,9 +78,9 @@ class MongoDBPipeline(object):
 
         if existingItem is None:
             self.collections[item['collection']].insert(dict(item))
-            self.logger.info(f"Item added to MongoDB collection {item['collection']}")
+            self.logger.debug(f"Item added to MongoDB collection {item['collection']}")
         else:
-            self.logger.info(f"Item already exists in MongoDB collection {item['collection']}")
+            self.logger.debug(f"Item already exists in MongoDB collection {item['collection']}")
 
             for field in item.fields:
                 if field not in existingItem:
@@ -99,31 +99,31 @@ class MongoDBPipeline(object):
                                     same_keys = [k for k in newEntry if k in existingEntry]
                                     same_value_keys = [k for k in same_keys if newEntry[k] == existingEntry[k]]
                                     if len(same_keys) == len(same_value_keys):
-                                        self.logger.info(f"Updating existing dict-entry in field '{field}' of item {existingItem['_id']} in collection {item['collection']}")
+                                        self.logger.debug(f"Updating existing dict-entry in field '{field}' of item {existingItem['_id']} in collection {item['collection']}")
                                         for key in newEntry:
                                             existingEntry[key] = newEntry[key]
                                         existingItem[field][index] = existingEntry
                                         bEntryFound = True
                                         break 
                                 if not bEntryFound:
-                                    self.logger.info(f"Adding new dict-entry to field {field} of item {existingItem['_id']} in collection {item['collection']}")
+                                    self.logger.debug(f"Adding new dict-entry to field {field} of item {existingItem['_id']} in collection {item['collection']}")
                                     existingItem[field].append(newEntry)
                         else:
                             for newEntry in item[field]:
                                 if newEntry not in existingItem[field]:
-                                    self.logger.info(f"Adding new entry '{newEntry}' to field {field} of item {existingItem['_id']} in collection {item['collection']}")
+                                    self.logger.debug(f"Adding new entry '{newEntry}' to field {field} of item {existingItem['_id']} in collection {item['collection']}")
                                     existingItem[field].append(newEntry)
                         set_dict[field] = existingItem[field]
                     else:
                         if field in dict_fields:
-                            self.logger.info(f"Updating dict-entry '{field}' of item {existingItem['_id']} in collection {item['collection']}.")
+                            self.logger.debug(f"Updating dict-entry '{field}' of item {existingItem['_id']} in collection {item['collection']}.")
                             for key in item[field]:
                                 existingItem[field][key] = item[field][key]
                             set_dict[field] = existingItem[field]
                         else:
-                            self.logger.info(f"Updating field {field} of item {existingItem['_id']} in collection {item['collection']}. New value: '{item[field]}'")
+                            self.logger.debug(f"Updating field {field} of item {existingItem['_id']} in collection {item['collection']}. New value: '{item[field]}'")
                             set_dict[field] = item[field]
                         
                 self.collections[item['collection']].update_one({'_id': existingItem['_id']}, {'$set': set_dict})
-                self.logger.info(f"Updated item")
+                self.logger.debug(f"Item updated successfully")
         return item
