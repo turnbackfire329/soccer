@@ -50,6 +50,8 @@ ROBOTSTXT_OBEY = True
 #    'tm.middlewares.TmSpiderMiddleware': 543,
 #}
 
+HTTPERROR_ALLOWED_CODES = [500]
+
 # Enable or disable downloader middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
 DOWNLOADER_MIDDLEWARES = {
@@ -99,3 +101,218 @@ LOG_LEVEL = "WARNING"
 #HTTPCACHE_DIR = 'httpcache'
 #HTTPCACHE_IGNORE_HTTP_CODES = []
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
+
+POINT_RULES = ['2p', '3p']
+
+COMPETITION_DATA = {
+    'BL1': {
+        'point_rules': [
+            {
+                'season_to': 1994,
+                'rule': '2p',
+            },
+            {
+                'season_from': 1995,
+                'rule': '3p',
+            }
+        ],
+        'tie_break_rules': [
+            'POINTS',
+            'GOAL_DIFFERENCE',
+            'GOALS',
+            'POINTS_H2H',
+            'GOAL_DIFFERENCE_H2H',
+            'AWAY_GOALS_H2H',
+            'AWAY_GOALS',
+        ],
+    },
+    'BL2': {
+        'point_rules': [
+            {
+                'season_to': 1994,
+                'rule': '2p',
+            },
+            {
+                'season_from': 1995,
+                'rule': '3p',
+            }
+        ],
+        'tie_break_rules': [
+            'POINTS',
+            'GOAL_DIFFERENCE',
+            'GOALS',
+            'POINTS_H2H',
+            'GOAL_DIFFERENCE_H2H',
+            'AWAY_GOALS_H2H',
+            'AWAY_GOALS',
+        ],
+    },
+    'BL3': {
+        'point_rules': [
+            {
+                'season_from': 2008,
+                'rule': '3p',
+            }
+        ],
+        'tie_break_rules': [
+            'POINTS',
+            'GOAL_DIFFERENCE',
+            'GOALS',
+            'POINTS_H2H',
+            'GOAL_DIFFERENCE_H2H',
+            'AWAY_GOALS_H2H',
+            'AWAY_GOALS',
+        ],
+    },
+    'PL': {
+        'point_rules': [
+            {
+                'season_from': 1992,
+                'rule': '3p',
+            }
+        ],
+        'tie_break_rules': [
+            'POINTS',
+            'GOAL_DIFFERENCE',
+            'GOALS',
+        ],
+    },
+    'ELC': {
+        'point_rules': [
+            {
+                'season_from': 2004,
+                'rule': '3p',
+            }
+        ],
+        'tie_break_rules': [
+            'POINTS',
+            'GOAL_DIFFERENCE',
+            'GOALS',
+        ],
+    },
+    'EL1': {
+        'point_rules': [
+            {
+                'season_from': 2004,
+                'rule': '3p',
+            }
+        ],
+        'tie_break_rules': [
+            'POINTS',
+            'GOAL_DIFFERENCE',
+            'GOALS',
+        ],
+    },
+    'SA': {
+        'point_rules': [
+            {
+                'season_to': 1993,
+                'rule': '2p',
+            },
+            {
+                'season_from': 1994,
+                'rule': '3p',
+            }
+        ],
+        'tie_break_rules': [
+            'POINTS',
+            'POINTS_H2H',
+            'GOAL_DIFFERENCE_H2H',
+            'GOAL_DIFFERENCE',
+            'GOALS',
+        ],
+    },
+    'SB': {
+        'point_rules': [
+            {
+                'season_to': 1993,
+                'rule': '2p',
+            },
+            {
+                'season_from': 1994,
+                'rule': '3p',
+            }
+        ],
+        'tie_break_rules': [
+            'POINTS',
+            'POINTS_H2H',
+            'GOAL_DIFFERENCE_H2H',
+            'GOAL_DIFFERENCE',
+            'GOALS',
+        ],
+    },
+    'FL1': {
+        'point_rules': [
+            {
+                'season_to': 1993,
+                'rule': '2p',
+            },
+            {
+                'season_from': 1994,
+                'rule': '3p',
+            }
+        ],
+        'tie_break_rules': [
+            'POINTS',
+            'GOAL_DIFFERENCE',
+            'GOALS',
+        ],
+    },
+    'FL2': {
+        'point_rules': [
+            {
+                'season_to': 1993,
+                'rule': '2p',
+            },
+            {
+                'season_from': 1994,
+                'rule': '3p',
+            }
+        ],
+        'tie_break_rules': [
+            'POINTS',
+            'GOAL_DIFFERENCE',
+            'GOALS',
+        ],
+    },
+    'PD': {
+        'point_rules': [
+            {
+                'season_to': 1994,
+                'rule': '2p',
+            },
+            {
+                'season_from': 1995,
+                'rule': '3p',
+            }
+        ],
+        'tie_break_rules': [
+            'POINTS',
+            'POINTS_H2H',
+            'GOAL_DIFFERENCE_H2H',
+            'GOALS_H2H',
+            'GOAL_DIFFERENCE',
+            'GOALS',
+        ],
+    },
+    'SD': {
+        'point_rules': [
+            {
+                'season_to': 1994,
+                'rule': '2p',
+            },
+            {
+                'season_from': 1995,
+                'rule': '3p',
+            }
+        ],
+        'tie_break_rules': [
+            'POINTS',
+            'POINTS_H2H',
+            'GOAL_DIFFERENCE_H2H',
+            'GOALS_H2H',
+            'GOAL_DIFFERENCE',
+            'GOALS',
+        ],
+    },
+}

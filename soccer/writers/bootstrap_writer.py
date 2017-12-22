@@ -1,6 +1,7 @@
 """ Bootstrap writer """
 import logging
 from soccer.writers import BasicWriter
+from ..util import POINT_RULES, DEFAULT_POINT_RULE_DISPLAY_NEGATIVE_POINTS
 
 class BootstrapWriter(BasicWriter):
     """
@@ -10,16 +11,33 @@ class BootstrapWriter(BasicWriter):
         self.logger = logging.getLogger(__name__)
 
     def league_table(self, table):
+        if table is None:
+            return "I could not calculate a table. Maybe the season does not exist or no fixtures have been played?"
         html = "<table class='table table-striped table-hover table-condensed'><thead><tr><th>#</th><th>Team</th><th>P</th><th class='hidden-xs'>W</th><th class='hidden-xs'>D</th><th class='hidden-xs'>L</th><th>Goals</th><th class='hidden-xs'>Diff</th><th>Pts</th></tr></thead><tbody>"
 
+        try:
+            display_negative_points = POINT_RULES[table['point_rule']]['DISPLAY_NEGATIVE_POINTS']
+        except KeyError:
+            display_negative_points = DEFAULT_POINT_RULE_DISPLAY_NEGATIVE_POINTS
+
         for team in table["standings"]:
-            html = html + f"<tr><td>{team['position']}</td><td>{team['teamName']}</td><td>{team['playedGames']}</td><td class='hidden-xs'>{team['wins']}</td><td class='hidden-xs'>{team['draws']}</td><td class='hidden-xs'>{team['losses']}</td><td>{team['goals']}:{team['goalsAgainst']}</td><td class='hidden-xs'>{team['goals']-team['goalsAgainst']}</td><td>{team['points']}</td></tr>"
+            if display_negative_points is True:
+                points = str(team['points']) + ":" + str(team['negative_points'])
+            else:
+                points = str(team['points'])
+
+            html = html + f"<tr><td>{team['position']}</td><td>{team['teamName']}</td><td>{team['playedGames']}</td><td class='hidden-xs'>{team['wins']}</td><td class='hidden-xs'>{team['draws']}</td><td class='hidden-xs'>{team['losses']}</td><td>{team['goals']}:{team['goalsAgainst']}</td><td class='hidden-xs'>{team['goals']-team['goalsAgainst']}</td><td>{points}</td></tr>"
 
         html = html + "</tbody></table>"
         return html
 
     def rank_table(self, table, position):
         html = "<table class='table table-striped table-hover table-condensed'><thead><tr><th>#</th><th>Team</th><th>P</th><th class='hidden-xs'>W</th><th class='hidden-xs'>D</th><th class='hidden-xs'>L</th><th>Goals</th><th class='hidden-xs'>Diff</th><th>Pts</th></tr></thead><tbody>"
+
+        try:
+            display_negative_points = POINT_RULES[table['point_rule']]['DISPLAY_NEGATIVE_POINTS']
+        except KeyError:
+            display_negative_points = DEFAULT_POINT_RULE_DISPLAY_NEGATIVE_POINTS
 
         if position == "won":
             position = 0
@@ -35,10 +53,16 @@ class BootstrapWriter(BasicWriter):
 
         for pos in range(max(0,position-2), min(position+3, len(table["standings"]))):
             team = table["standings"][pos]
-            if pos == position:
-                html = html + f"<tr class='success'><td>{team['position']}</td><td>{team['teamName']}</td><td>{team['playedGames']}</td><td class='hidden-xs'>{team['wins']}</td><td class='hidden-xs'>{team['draws']}</td><td class='hidden-xs'>{team['losses']}</td><td>{team['goals']}:{team['goalsAgainst']}</td><td class='hidden-xs'>{team['goals']-team['goalsAgainst']}</td><td>{team['points']}</td></tr>"
+
+            if display_negative_points is True:
+                points = str(team['points']) + ":" + str(team['negative_points'])
             else:
-                html = html + f"<tr><td>{team['position']}</td><td>{team['teamName']}</td><td>{team['playedGames']}</td><td class='hidden-xs'>{team['wins']}</td><td class='hidden-xs'>{team['draws']}</td><td class='hidden-xs'>{team['losses']}</td><td>{team['goals']}:{team['goalsAgainst']}</td><td class='hidden-xs'>{team['goals']-team['goalsAgainst']}</td><td>{team['points']}</td></tr>"
+                points = str(team['points'])
+
+            if pos == position:
+                html = html + f"<tr class='success'><td>{team['position']}</td><td>{team['teamName']}</td><td>{team['playedGames']}</td><td class='hidden-xs'>{team['wins']}</td><td class='hidden-xs'>{team['draws']}</td><td class='hidden-xs'>{team['losses']}</td><td>{team['goals']}:{team['goalsAgainst']}</td><td class='hidden-xs'>{team['goals']-team['goalsAgainst']}</td><td>{points}</td></tr>"
+            else:
+                html = html + f"<tr><td>{team['position']}</td><td>{team['teamName']}</td><td>{team['playedGames']}</td><td class='hidden-xs'>{team['wins']}</td><td class='hidden-xs'>{team['draws']}</td><td class='hidden-xs'>{team['losses']}</td><td>{team['goals']}:{team['goalsAgainst']}</td><td class='hidden-xs'>{team['goals']-team['goalsAgainst']}</td><td>{points}</td></tr>"
 
         if position < len(table["standings"]) - 3:
             html = html + f"<tr><td colspan='9' class='text-center'>...</td></tr>"
