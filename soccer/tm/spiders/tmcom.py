@@ -12,7 +12,6 @@ from ..items import TeamItem, TeamSeasonItem, CompetitionItem, CompetitionSeason
 from bson.objectid import ObjectId
 from scrapy.http import HtmlResponse
 
-
 class TmcomSpider(scrapy.Spider):
     name = 'tmcom'
     allowed_domains = ['transfermarkt.com']
@@ -48,6 +47,9 @@ class TmcomSpider(scrapy.Spider):
     logger = logging.getLogger()
 
     def parse(self, response):
+        if response.status == 500:
+            return 
+
         self.logger.debug(f"Crawl settings: {self.settings.attributes.keys()}")
         item_competition = CompetitionItem(
                 _id = ObjectId(),
@@ -58,8 +60,12 @@ class TmcomSpider(scrapy.Spider):
         item_competition['url'] = response.url
         try:
             item_competition['league_code'] = self.start_url_dict[response.url[len(self.base_url):]]
+            item_competition['metadata'] = self.settings.get("COMPETITION_DATA")[item_competition['league_code']]
         except KeyError:
-            item_competition['league_code'] = None
+            return
+
+        if self.settings.get("LEAGUE_CODE") is not None and self.settings.get("LEAGUE_CODE") != item_competition['league_code']:
+            return
 
         seasons = response.css('select[name=saison_id] > option ::attr(value)').extract()
         item_competition['seasons'] = seasons
@@ -88,10 +94,17 @@ class TmcomSpider(scrapy.Spider):
                     'item_fixture': FixtureItem(fixture)
                 })
         else:
-            seasons = [self.settings.get("SEASON")] if self.settings.get("SEASON") is not None else seasons
+            if self.settings.get("SEASON") is not None:
+                season = self.settings.get("SEASON")
+                if season in seasons:
+                    seasons = [season]
+                else:
+                    seasons = []
 
             if len(seasons) == 1:
                 self.logger.info(f"Scraping season {seasons[0]}")
+            elif len(seasons) == 0:
+                self.logger.warning(f"Data for this season is not available")
             else:
                 self.logger.info(f"Scraping {len(seasons)} seasons")
 
@@ -111,6 +124,9 @@ class TmcomSpider(scrapy.Spider):
                 #break
 
     def parseSeason(self, response):
+        if response.status == 500:
+            return 
+
         item_competition_season = response.meta['item_competition_season']
 
         teams = response.css(".hauptlink.hide-for-small > a.vereinprofil_tooltip")
@@ -124,7 +140,7 @@ class TmcomSpider(scrapy.Spider):
                     "league_code": item_competition_season['league_code']
                 },
                 url=self.base_url + team.css("::attr(href)").extract_first(),
-                collection="team_season"
+                collection="team_season",
             )
 
             team_url = item_team_season['url'][:item_team_season['url'].find("/saison_id")]
@@ -134,7 +150,7 @@ class TmcomSpider(scrapy.Spider):
                 name=item_team_season['name'],
                 collection='teams',
                 url=team_url,
-                competitions=[item_team_season["competition"]]
+                competitions=[item_team_season["competition"]],
             )
 
             yield item_team
@@ -161,10 +177,16 @@ class TmcomSpider(scrapy.Spider):
         yield item_competition_season
 
     def parseTeam(self, response):
+        if response.status == 500:
+            return 
+
         item_team = response.meta['item_team']
         yield item_team
         
     def parseTeamSeason(self, response):
+        if response.status == 500:
+            return 
+
         item_team_season = response.meta['item_team_season']
         item_team_season['players'] = []
 
@@ -211,18 +233,27 @@ class TmcomSpider(scrapy.Spider):
         yield item_team_season
 
     def parsePlayer(self, response):
+        if response.status == 500:
+            return 
+
         item_player = response.meta['item_player']
         yield item_player
 
     def parseAllFixtures(self, response):
+        if response.status == 500:
+            return 
+
         item_competition_season = response.meta['item_competition_season']
 
         matchdays = response.css(".large-6.columns > .box")
 
         for matchday in matchdays:
             matchday_no = matchday.css(".table-header ::text").extract_first().split(".")[0]
-            fixtures_or_dates = matchday.css("table > tbody > tr")
+            if self.settings.get("MATCHDAY") is not None and self.settings.get("MATCHDAY") != matchday_no:
+                continue
 
+            fixtures_or_dates = matchday.css("table > tbody > tr")
+            fixture_date = None
             for fixture_or_date in fixtures_or_dates:
                 columns = fixture_or_date.css("td")
                 if len(columns.extract()) > 5:
@@ -240,10 +271,17 @@ class TmcomSpider(scrapy.Spider):
                             away_team_id = column.css("a.vereinprofil_tooltip ::attr(id)").extract_first()
                             away_team_url = self.base_url + column.css("a.vereinprofil_tooltip ::attr(href)").extract_first()
                             away_team_name = column.css("a.vereinprofil_tooltip > img ::attr(alt)").extract_first()
+                        elif idx == 0: # date
+                            try:
+                                fixture_date = datetime.datetime.strptime(column.css("::text").extract()[1], "%b %d, %Y")
+                            except:
+                                if fixture_date is None:
+                                    fixture_date = datetime.datetime(item_competition_season['season'], 12, 31)
                     try:
                         item_fixture = FixtureItem(
                             _id=ObjectId(),
                             collection="fixtures",
+                            date=fixture_date,
                             url=url,
                             matchday=int(matchday_no),
                             homeTeam={
@@ -266,8 +304,11 @@ class TmcomSpider(scrapy.Spider):
                             referee={},
                             goals=[],
                             assists=[],
-                            cards=[]
+                            cards=[],
+                            lineups={},
                         )
+
+                        self.logger.info(f"Found fixture: Season {item_fixture['season']}, Matchday {item_fixture['matchday']}: {item_fixture['homeTeam']['name']} - {item_fixture['awayTeam']['name']}")
 
                         yield scrapy.Request(url, callback=self.parseFixture, meta={
                             'item_fixture': item_fixture
@@ -276,8 +317,11 @@ class TmcomSpider(scrapy.Spider):
                         pass
             #break
 
-    def parseFixture(self, response):
+    def parseFixture(self, response):        
         item_fixture = response.meta['item_fixture']
+
+        if response.status == 500:
+            yield item_fixture
 
         # date and time
         try:
