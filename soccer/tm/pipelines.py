@@ -150,7 +150,9 @@ class MongoDBPipeline(object):
         search_item['ngrams'] = self.make_ngrams(item[search_field], prefix_only=False)
         search_item['prefix_ngrams'] = self.make_ngrams(item[search_field], prefix_only=True)
 
-        self.collections[search_collection].update_one(query, search_item, upsert=True) 
+        self.collections[search_collection].update_one(query, {
+            "$set": search_item, 
+        }, upsert=True) 
 
     def make_ngrams(self, word,prefix_only=False):
         """
