@@ -65,7 +65,7 @@ class MongoDBPipeline(object):
         array_fields = []
         array_replace_fields = []
         dict_fields = []
-        search_field = None
+        search_fields = {}
         for field in item.fields:
             if item.fields[field]['existCheck']:
                 find_dict[field] = item[field]
@@ -78,15 +78,15 @@ class MongoDBPipeline(object):
             if item.fields[field]['isDict']:
                 dict_fields.append(field)
             if item.fields[field]['isSearchField']:
-                search_field = field
+                search_fields[field] = item.fields[field]['searchWeight']
 
         existingItem = self.collections[item['collection']].find_one(find_dict)
 
         if existingItem is None:
             self.collections[item['collection']].insert(dict(item))
             self.logger.debug(f"Item added to MongoDB collection {item['collection']}")
-            if search_field is not None:
-                self.create_index_for_search(item, search_field, list(find_dict.keys()))
+            if search_fields:
+                self.create_index_for_search(item, search_fields, list(find_dict.keys()))
         else:
             self.logger.debug(f"Item already exists in MongoDB collection {item['collection']}")
 
@@ -134,11 +134,11 @@ class MongoDBPipeline(object):
                         
                 self.collections[item['collection']].update_one({'_id': existingItem['_id']}, {'$set': set_dict})
                 self.logger.debug(f"Item updated successfully")
-                if search_field is not None:
-                    self.create_index_for_search(item, search_field, list(find_dict.keys()))
+                if search_fields:
+                    self.create_index_for_search(item, search_fields, list(find_dict.keys()))
         return item
 
-    def create_index_for_search(self, item, search_field, exist_check_fields):
+    def create_index_for_search(self, item, search_fields, exist_check_fields):
         search_collection = item['collection'] + '.search'
 
         query = {}
@@ -147,11 +147,11 @@ class MongoDBPipeline(object):
             search_item[field] = item[field]
             query[field] = item[field]
         
-        word_processed = item[search_field].translate({ ord(c): None for c in string.whitespace }).lower()
-
-        search_item[search_field] = item[search_field]
-        search_item['ngrams'] = self.make_ngrams(word_processed, prefix_only=False)
-        search_item['prefix_ngrams'] = self.make_ngrams(word_processed, prefix_only=True)
+        for field in search_fields:
+            word_processed = item[field].translate({ ord(c): None for c in string.whitespace }).lower()
+            search_item[field] = item[field]
+            search_item[field + 'ngrams'] = self.make_ngrams(word_processed, prefix_only=False)
+            search_item[field + 'prefix_ngrams'] = self.make_ngrams(word_processed, prefix_only=True)
 
         self.collections[search_collection].update_one(query, {
             "$set": search_item, 
