@@ -7,6 +7,7 @@
 
 import json
 import codecs
+import string
 from pymongo import MongoClient
 from scrapy.conf import settings
 from urllib.parse import quote_plus
@@ -146,19 +147,21 @@ class MongoDBPipeline(object):
             search_item[field] = item[field]
             query[field] = item[field]
         
+        word_processed = item[search_field].translate(None, string.whitespace).lower()
+
         search_item[search_field] = item[search_field]
-        search_item['ngrams'] = self.make_ngrams(item[search_field], prefix_only=False)
-        search_item['prefix_ngrams'] = self.make_ngrams(item[search_field], prefix_only=True)
+        search_item['ngrams'] = self.make_ngrams(word_processed, prefix_only=False)
+        search_item['prefix_ngrams'] = self.make_ngrams(word_processed, prefix_only=True)
 
         self.collections[search_collection].update_one(query, {
             "$set": search_item, 
         }, upsert=True) 
 
-    def make_ngrams(self, word,prefix_only=False):
+    def make_ngrams(self, word, prefix_only=False):
         """
             string  word: word to split into ngrams
         """    
-        min_size = 3
+        min_size = 4
         length = len(word)
         size_range = range(min_size, max(length, min_size) + 1)
         if prefix_only:
