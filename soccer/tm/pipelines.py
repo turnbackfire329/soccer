@@ -147,7 +147,7 @@ class MongoDBPipeline(object):
             search_item[field] = item[field]
             query[field] = item[field]
         
-        word_processed = item[search_field].translate(None, string.whitespace).lower()
+        word_processed = item[search_field].translate({ ord(c): None for c in string.whitespace }).lower()
 
         search_item[search_field] = item[search_field]
         search_item['ngrams'] = self.make_ngrams(word_processed, prefix_only=False)
