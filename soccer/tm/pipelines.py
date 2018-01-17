@@ -52,7 +52,9 @@ class MongoDBPipeline(object):
             "competitions": db["competitions"],
             "competition_season": db["competition_season"],
             "players": db["players"],
-            "fixtures": db["fixtures"]
+            "fixtures": db["fixtures"],
+            "teams.search": db["teams.search"],
+            "players.search": db["players.search"],
         }
         self.logger = logging.getLogger(__name__)
 
@@ -62,6 +64,7 @@ class MongoDBPipeline(object):
         array_fields = []
         array_replace_fields = []
         dict_fields = []
+        search_field = None
         for field in item.fields:
             if item.fields[field]['existCheck']:
                 find_dict[field] = item[field]
@@ -73,12 +76,16 @@ class MongoDBPipeline(object):
                 array_replace_fields.append(field)
             if item.fields[field]['isDict']:
                 dict_fields.append(field)
+            if item.fields[field]['isSearchField']:
+                search_field = field
 
         existingItem = self.collections[item['collection']].find_one(find_dict)
 
         if existingItem is None:
             self.collections[item['collection']].insert(dict(item))
             self.logger.debug(f"Item added to MongoDB collection {item['collection']}")
+            if search_field is not None:
+                self.create_index_for_search(item, search_field, list(find_dict.keys()))
         else:
             self.logger.debug(f"Item already exists in MongoDB collection {item['collection']}")
 
@@ -126,4 +133,39 @@ class MongoDBPipeline(object):
                         
                 self.collections[item['collection']].update_one({'_id': existingItem['_id']}, {'$set': set_dict})
                 self.logger.debug(f"Item updated successfully")
+                if search_field is not None:
+                    self.create_index_for_search(item, search_field, list(find_dict.keys()))
         return item
+
+    def create_index_for_search(self, item, search_field, exist_check_fields):
+        search_collection = item['collection'] + '.search'
+
+        query = {}
+        search_item = {}
+        for field in exist_check_fields:
+            search_item[field] = item[field]
+            query[field] = item[field]
+        
+        search_item[search_field] = item[search_field]
+        search_item['ngrams'] = self.make_ngrams(item[search_field], prefix_only=False)
+        search_item['prefix_ngrams'] = self.make_ngrams(item[search_field], prefix_only=True)
+
+        self.collections[search_collection].update_one(query, search_item, upsert=True) 
+
+    def make_ngrams(self, word,prefix_only=False):
+        """
+            string  word: word to split into ngrams
+        """    
+        min_size = 3
+        length = len(word)
+        size_range = range(min_size, max(length, min_size) + 1)
+        if prefix_only:
+            return [
+                word[0:size]
+                for size in size_range
+            ]
+        return list(set(
+            word[i:i + size]
+            for size in size_range
+            for i in range(0, max(0, length - size) + 1)
+        ))    
