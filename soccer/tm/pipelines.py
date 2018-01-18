@@ -191,7 +191,11 @@ class MongoDBPipeline(object):
                 weights[field + '_ngrams'] = item.fields[field]['searchWeight']
                 weights[field + '_prefix_ngrams'] = item.fields[field]['searchWeight'] + 50
 
-        self.collections[collection].drop_index(name)
+        try:
+            self.collections[collection].drop_index(name)
+        except:
+            pass
+
         self.collections[collection].create_index(
             keys,
             name=name,
