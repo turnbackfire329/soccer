@@ -8,11 +8,13 @@
 import json
 import codecs
 import string
+import logging
+import pymongo
 from pymongo import MongoClient
 from scrapy.conf import settings
 from urllib.parse import quote_plus
 from scrapy.exceptions import DropItem
-import logging
+from .items import TeamItem, TeamSeasonItem, PlayerItem, CompetitionItem, CompetitionSeasonItem, FixtureItem
 
 COLLECTIONS = ["teams", "team_season", "competitions", "competition_season", "players", "fixtures"]
 
@@ -86,7 +88,7 @@ class MongoDBPipeline(object):
             self.collections[item['collection']].insert(dict(item))
             self.logger.debug(f"Item added to MongoDB collection {item['collection']}")
             if search_fields:
-                self.create_index_for_search(item, search_fields, list(find_dict.keys()))
+                self.create_ngrams_for_search(item, search_fields, list(find_dict.keys()))
         else:
             self.logger.debug(f"Item already exists in MongoDB collection {item['collection']}")
 
@@ -135,10 +137,10 @@ class MongoDBPipeline(object):
                 self.collections[item['collection']].update_one({'_id': existingItem['_id']}, {'$set': set_dict})
                 self.logger.debug(f"Item updated successfully")
                 if search_fields:
-                    self.create_index_for_search(item, search_fields, list(find_dict.keys()))
+                    self.create_ngrams_for_search(item, search_fields, list(find_dict.keys()))
         return item
 
-    def create_index_for_search(self, item, search_fields, exist_check_fields):
+    def create_ngrams_for_search(self, item, search_fields, exist_check_fields):
         search_collection = item['collection'] + '.search'
 
         query = {}
@@ -150,8 +152,8 @@ class MongoDBPipeline(object):
         for field in search_fields:
             word_processed = item[field].translate({ ord(c): None for c in string.whitespace }).lower()
             search_item[field] = item[field]
-            search_item[field + 'ngrams'] = self.make_ngrams(word_processed, prefix_only=False)
-            search_item[field + 'prefix_ngrams'] = self.make_ngrams(word_processed, prefix_only=True)
+            search_item[field + '_ngrams'] = self.make_ngrams(word_processed, prefix_only=False)
+            search_item[field + '_prefix_ngrams'] = self.make_ngrams(word_processed, prefix_only=True)
 
         self.collections[search_collection].update_one(query, {
             "$set": search_item, 
@@ -173,4 +175,25 @@ class MongoDBPipeline(object):
             word[i:i + size]
             for size in size_range
             for i in range(0, max(0, length - size) + 1)
-        ))    
+        ))  
+
+    def close_spider(self, spider):
+        self.create_search_index("teams.search", "search_team_ngrams", TeamItem())
+        self.create_search_index("players.search", "search_player_ngrams", PlayerItem())
+
+    def create_search_index(self, collection, name, item):
+        keys = []
+        weights = {}
+        for field in item.fields:
+            if item.fields[field]['isSearchField']:
+                keys.append((field + '_ngrams', pymongo.TEXT))
+                keys.append((field + '_prefix_ngrams', pymongo.TEXT))
+                weights[field + '_ngrams'] = item.fields[field]['searchWeight']
+                weights[field + '_prefix_ngrams'] = item.fields[field]['searchWeight'] + 50
+
+        self.collections[collection].drop_index(name)
+        self.collections[collection].create_index(
+            keys,
+            name=name,
+            weights=weights
+        )
