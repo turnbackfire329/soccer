@@ -30,6 +30,24 @@ def get_current_decade():
 def get_season_range(startDate, endDate):
     return list(range(get_season_from_date(startDate), get_season_from_date(endDate) + 1))
 
+def make_ngrams(word, prefix_only=False):
+    """
+        string  word: word to split into ngrams
+    """    
+    min_size = 4
+    length = len(word)
+    size_range = range(min_size, max(length, min_size) + 1)
+    if prefix_only:
+        return [
+            word[0:size]
+            for size in size_range
+        ]
+    return list(set(
+        word[i:i + size]
+        for size in size_range
+        for i in range(0, max(0, length - size) + 1)
+    )) 
+
 EMPTY_TEAM_STANDINGS = {
     "goals": 0,
     "goalsAgainst": 0,

@@ -128,3 +128,9 @@ class Soccer(object):
             standings = self.dc.convert_league_table(standings, home=False)
         standings["standing"] = self.dc.sort_league_table(standings["standing"], sortBy, ascending)
         return standings
+
+    def search_team(self, query):
+        return self.dc.search_team(query)
+    
+    def search_player(self, query):
+        return self.dc.search_player(query)
