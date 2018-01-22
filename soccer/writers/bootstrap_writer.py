@@ -31,7 +31,7 @@ class BootstrapWriter(BasicWriter):
         html = html + "</tbody></table>"
         return html
 
-    def rank_table(self, table, position):
+    def rank_table(self, table, rank=None, teams=None):
         html = "<table class='table table-striped table-hover table-condensed'><thead><tr><th>#</th><th>Team</th><th>P</th><th class='hidden-xs'>W</th><th class='hidden-xs'>D</th><th class='hidden-xs'>L</th><th>Goals</th><th class='hidden-xs'>Diff</th><th>Pts</th></tr></thead><tbody>"
 
         try:
@@ -39,19 +39,29 @@ class BootstrapWriter(BasicWriter):
         except KeyError:
             display_negative_points = DEFAULT_POINT_RULE_DISPLAY_NEGATIVE_POINTS
 
-        if position == "won":
-            position = 0
-        elif position == "last":
-            position = len(table["standings"]) - 1
-        elif type(position) == int:
-            position = min(position, len(table["standings"])) - 1
-        else:
-            position = 0
+        if teams is not None:
+            team = teams[0]
+            for pos in table['standings']:
+                if table['standings'][pos]['teamId'] == team:
+                    rank = table['standings'][pos]['position']
+                    break
+        
+        if rank is None:
+            return self.league_table(table)
 
-        if position > 2:
+        if rank == "won":
+            rank = 0
+        elif rank == "last":
+            rank = len(table["standings"]) - 1
+        elif type(rank) == int:
+            rank = min(rank, len(table["standings"])) - 1
+        else:
+            rank = 0
+
+        if rank > 2:
             html = html + f"<tr><td colspan='9' class='text-center'>...</td></tr>"
 
-        for pos in range(max(0,position-2), min(position+3, len(table["standings"]))):
+        for pos in range(max(0,rank-2), min(rank+3, len(table["standings"]))):
             team = table["standings"][pos]
 
             if display_negative_points is True:
@@ -59,12 +69,12 @@ class BootstrapWriter(BasicWriter):
             else:
                 points = str(team['points'])
 
-            if pos == position:
+            if pos == rank:
                 html = html + f"<tr class='success'><td>{team['position']}</td><td>{team['teamName']}</td><td>{team['playedGames']}</td><td class='hidden-xs'>{team['wins']}</td><td class='hidden-xs'>{team['draws']}</td><td class='hidden-xs'>{team['losses']}</td><td>{team['goals']}:{team['goalsAgainst']}</td><td class='hidden-xs'>{team['goals']-team['goalsAgainst']}</td><td>{points}</td></tr>"
             else:
                 html = html + f"<tr><td>{team['position']}</td><td>{team['teamName']}</td><td>{team['playedGames']}</td><td class='hidden-xs'>{team['wins']}</td><td class='hidden-xs'>{team['draws']}</td><td class='hidden-xs'>{team['losses']}</td><td>{team['goals']}:{team['goalsAgainst']}</td><td class='hidden-xs'>{team['goals']-team['goalsAgainst']}</td><td>{points}</td></tr>"
 
-        if position < len(table["standings"]) - 3:
+        if rank < len(table["standings"]) - 3:
             html = html + f"<tr><td colspan='9' class='text-center'>...</td></tr>"
 
         html = html + "</tbody></table>"
@@ -87,3 +97,6 @@ class BootstrapWriter(BasicWriter):
 
         html = html + "</tbody></table>"
         return html
+
+    def ranks_teams(self, ranks_of_teams):
+        return ranks_of_teams

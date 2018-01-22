@@ -106,6 +106,12 @@ class TMConnector(DataConnector):
     def get_table(self, league_code, teams=None, timeFrame=None):
         timeFrame = self._check_timeFrame(timeFrame)
 
+        if teams is not None:
+            self.logger.debug(f"The following teams are given: {teams}")
+            if len(teams) == 1:
+                self.logger.debug(f"Since only one team was given the complete table is calculated")
+                teams = None
+
         findDict = {
             "league_code": league_code,
             "teams": teams,
@@ -266,6 +272,37 @@ class TMConnector(DataConnector):
 
     def get_competition(self, league_code):
         return self.collections["competitions"].find_one({'league_code': league_code})
+
+    def get_ranks_of_teams(self, league_code, teams, timeFrame):
+
+        ranks = {}
+
+        if timeFrame is None:
+            timeFrame = {
+                'type': 'season',
+                'season_from': 1900,
+                'season_to': get_current_season()
+            }
+
+        seasons = self._get_seasons_from_timeframe(timeFrame)
+
+        for season in seasons:
+            temp_timeframe = {
+                'type': 'season',
+                'season_from': season,
+                'season_to': season
+            }
+            table = self.get_table(league_code, None, temp_timeframe)
+
+            if table is not None and table['status'] == self.TABLE_STATUS['done']:
+                ranks[season] = {}
+                standings = table['standings']
+
+                for standing in standings:
+                    if standing['teamId'] in teams:
+                        ranks[season][standing['teamId']] = standing['position']
+
+        return ranks
 
     def search_player(self, query):
         query = query.translate({ ord(c): None for c in string.whitespace }).lower()

@@ -45,6 +45,9 @@ class DataConnector(object):
     def get_fixtures_by_league_code(self, league_code, season):
         pass
 
+    def get_ranks_of_teams(self, league_code, teams, timeFrame):
+        pass
+
     def get_team(self, team_id):
         return {
             "team_id": team_id,

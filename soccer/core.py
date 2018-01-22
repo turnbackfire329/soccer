@@ -78,10 +78,10 @@ class Soccer(object):
                     pass
 
     def get_table(self, league_code, teams=None, timeFrame=None, rank=None):
-        if rank is None:
+        if (rank is None and teams is None) or (rank is not None and teams is not None):
             return self.writer.league_table(self.dc.get_table(league_code=league_code, teams=teams, timeFrame=timeFrame))
         else:
-            return self.writer.rank_table(self.dc.get_table(league_code=league_code, teams=teams, timeFrame=timeFrame), rank)
+            return self.writer.rank_table(self.dc.get_table(league_code=league_code, teams=teams, timeFrame=timeFrame), rank=rank, teams=teams)
 
     def get_fixtures(self, league_code, teams=None, timeFrame=None):
         return self.writer.fixture_list(self.dc.get_fixtures(league_code=league_code, teams=teams, timeFrame=timeFrame))
@@ -89,9 +89,11 @@ class Soccer(object):
     def get_current_matchday(self, competition):
         return self.dc.get_current_matchday(competition)
     
-    def get_rank(self, league_code, teams=None, timeFrame=None, rank=None):
-        return self.writer.title_table(self.dc.get_title_table(league_code=league_code, teams=teams, timeFrame=timeFrame, rank=rank))
-
+    def get_titles(self, league_code, teams=None, timeFrame=None, rank=None):
+        if teams is None:
+            return self.writer.title_table(self.dc.get_title_table(league_code=league_code, teams=teams, timeFrame=timeFrame, rank=rank))
+        else:
+            return self.writer.ranks_teams(self.dc.get_ranks_of_teams(league_code=league_code, teams=teams, timeFrame=timeFrame))
 
     def get_league_table(self, league_code, season=None, matchday=None, sortBy=None, ascending=None, home=True, away=True, teams=None, head2headOnly=False):
         # sanity checks
