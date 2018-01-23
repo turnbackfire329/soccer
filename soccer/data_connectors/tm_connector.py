@@ -294,7 +294,7 @@ class TMConnector(DataConnector):
             }
             table = self.get_table(league_code, None, temp_timeframe)
 
-            if table is not None and table['status'] == self.TABLE_STATUS['done']:
+            if table is not None:
                 ranks[season] = {}
                 standings = table['standings']
 

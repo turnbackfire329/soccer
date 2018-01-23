@@ -68,7 +68,8 @@ class TmcomSpider(scrapy.Spider):
             return
 
         seasons = response.css('select[name=saison_id] > option ::attr(value)').extract()
-        item_competition['seasons'] = seasons
+        int_seasons = list(map(int, seasons))
+        item_competition['seasons'] = int_seasons
         yield item_competition
 
         if self.settings.get("UPDATE_FIXTURES") is not None and self.settings.get("UPDATE_FIXTURES") == 'TRUE':

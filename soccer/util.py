@@ -30,6 +30,12 @@ def get_current_decade():
 def get_season_range(startDate, endDate):
     return list(range(get_season_from_date(startDate), get_season_from_date(endDate) + 1))
 
+def season_to_string(season):
+    first_year = int(season)
+    second_year = first_year + 1
+
+    return str(first_year) + "/" + str(second_year)[2:]
+
 def make_ngrams(word, prefix_only=False):
     """
         string  word: word to split into ngrams

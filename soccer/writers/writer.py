@@ -27,3 +27,6 @@ class BasicWriter(object):
 
     def ranks_teams(self, ranks_of_teams):
         pass
+
+    def rank_and_titles(self, rank_table, ranks_of_teams, teams=None):
+        pass

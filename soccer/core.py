@@ -81,7 +81,16 @@ class Soccer(object):
         if (rank is None and teams is None) or (rank is not None and teams is not None):
             return self.writer.league_table(self.dc.get_table(league_code=league_code, teams=teams, timeFrame=timeFrame))
         else:
-            return self.writer.rank_table(self.dc.get_table(league_code=league_code, teams=teams, timeFrame=timeFrame), rank=rank, teams=teams)
+            seasons = self.dc._get_seasons_from_timeframe(timeFrame)
+
+            if len(seasons) == 1:
+                return self.writer.rank_table(self.dc.get_table(league_code=league_code, teams=teams, timeFrame=timeFrame), rank=rank, teams=teams)
+            else:
+                return self.writer.rank_and_titles(
+                    rank_table=self.dc.get_table(league_code=league_code, teams=teams, timeFrame=timeFrame),
+                    ranks_of_teams=self.dc.get_ranks_of_teams(league_code=league_code, teams=teams, timeFrame=timeFrame), 
+                    teams=teams)
+
 
     def get_fixtures(self, league_code, teams=None, timeFrame=None):
         return self.writer.fixture_list(self.dc.get_fixtures(league_code=league_code, teams=teams, timeFrame=timeFrame))
