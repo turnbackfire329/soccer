@@ -3,11 +3,12 @@ This connector loads data from the transfermarkt.com database that is created vi
 that is part of this package
 """
 import datetime
+import string
 from urllib.parse import quote_plus
-from pymongo import MongoClient, ASCENDING
+from pymongo import MongoClient, ASCENDING, DESCENDING
 from .data_connector import DataConnector
 from ..exceptions import InvalidTimeFrameException
-from ..util import get_current_season
+from ..util import get_current_season, make_ngrams
 
 class TMConnector(DataConnector):
     """
@@ -24,9 +25,11 @@ class TMConnector(DataConnector):
             self.collections = {
                 "teams": self.db["teams"],
                 "team_season": self.db["team_season"],
+                "teams.search": self.db["teams.search"],
                 "competitions": self.db["competitions"],
                 "competition_season": self.db["competition_season"],
                 "players": self.db["players"],
+                "players.search": self.db["players.search"],
                 "fixtures": self.db["fixtures"],
                 "tables": self.db["tables"]
             }
@@ -49,7 +52,8 @@ class TMConnector(DataConnector):
         }
 
         if teams is not None:
-            findDict["$and"] = [{"$or":[{ "homeTeam.id": { "$in": teams }}, { "awayTeam.id": { "$in": teams }}]}]
+            team_ids = self._get_team_ids_from_teams(teams)
+            findDict["$and"] = [{"$or":[{ "homeTeam.id": { "$in": team_ids }}, { "awayTeam.id": { "$in": team_ids }}]}]
 
         if timeFrame["type"] == "date":
             if "$and" in findDict:
@@ -102,6 +106,12 @@ class TMConnector(DataConnector):
 
     def get_table(self, league_code, teams=None, timeFrame=None):
         timeFrame = self._check_timeFrame(timeFrame)
+
+        if teams is not None:
+            self.logger.debug(f"The following teams are given: {teams}")
+            if len(teams) == 1:
+                self.logger.debug(f"Since only one team was given the complete table is calculated")
+                teams = None
 
         findDict = {
             "league_code": league_code,
@@ -261,6 +271,71 @@ class TMConnector(DataConnector):
         else:
             return fixture[0]["matchday"]
 
-     
     def get_competition(self, league_code):
         return self.collections["competitions"].find_one({'league_code': league_code})
+
+    def get_ranks_of_teams(self, league_code, teams, timeFrame):
+
+        ranks = {}
+        team_ids = self._get_team_ids_from_teams(teams)
+
+        if timeFrame is None:
+            timeFrame = {
+                'type': 'season',
+                'season_from': 1900,
+                'season_to': get_current_season()
+            }
+
+        seasons = self._get_seasons_from_timeframe(timeFrame)
+
+        for season in seasons:
+            temp_timeframe = {
+                'type': 'season',
+                'season_from': season,
+                'season_to': season
+            }
+            table = self.get_table(league_code, None, temp_timeframe)
+
+            if table is not None:
+                ranks[season] = {}
+                standings = table['standings']
+
+                for standing in standings:
+                    if standing['teamId'] in team_ids:
+                        ranks[season][standing['teamId']] = standing['position']
+
+        return ranks
+
+    def search_player(self, query):
+        query = query.translate({ ord(c): None for c in string.whitespace }).lower()
+        ngrams = make_ngrams(query)
+        search_string = " ".join([str(x) for x in ngrams])  
+        return list(self.collections['players.search'].find({
+                "$text": {
+                    "$search": search_string
+                }
+            }, {
+                "player_id": True,
+                "name": True,
+                "score": {
+                    "$meta": "textScore"
+                }
+            }
+        ).sort([("score", {"$meta": "textScore"})]))
+
+    def search_team(self, query):
+        query = query.translate({ ord(c): None for c in string.whitespace }).lower()
+        ngrams = make_ngrams(query)
+        search_string = " ".join([str(x) for x in ngrams])  
+        return list(self.collections['teams.search'].find({
+                "$text": {
+                    "$search": search_string
+                }
+            }, {
+                "team_id": True,
+                "name": True,
+                "score": {
+                    "$meta": "textScore"
+                }
+            }
+        ).sort([("score", {"$meta": "textScore"})]))

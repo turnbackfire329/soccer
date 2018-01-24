@@ -68,7 +68,8 @@ class TmcomSpider(scrapy.Spider):
             return
 
         seasons = response.css('select[name=saison_id] > option ::attr(value)').extract()
-        item_competition['seasons'] = seasons
+        int_seasons = list(map(int, seasons))
+        item_competition['seasons'] = int_seasons
         yield item_competition
 
         if self.settings.get("UPDATE_FIXTURES") is not None and self.settings.get("UPDATE_FIXTURES") == 'TRUE':
@@ -218,10 +219,10 @@ class TmcomSpider(scrapy.Spider):
                     'number': columns.css(".rn_nummer ::text").extract_first()
                 }]
             )
-            yield item_player
-            # yield scrapy.Request(item_player['url'], callback=self.parsePlayer, meta={
-            #     'item_player': item_player
-            # })
+            #yield item_player
+            yield scrapy.Request(item_player['url'], callback=self.parsePlayer, meta={
+                'item_player': item_player
+            })
 
             item_team_season['players'].append({
                 'player_id': item_player['player_id'],
@@ -237,6 +238,19 @@ class TmcomSpider(scrapy.Spider):
             return 
 
         item_player = response.meta['item_player']
+
+        name = response.css("h1[itemprop=name]")
+
+        first_name = name.css("::text").extract_first().strip()
+        if first_name is None:
+            first_name = ""
+        last_name = name.css("b ::text").extract_first().strip()
+        if last_name is None:
+            last_name = ""
+
+        item_player['firstname'] = first_name
+        item_player['lastname'] = last_name
+
         yield item_player
 
     def parseAllFixtures(self, response):

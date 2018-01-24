@@ -3,11 +3,28 @@
 import datetime
 from .context import soccer
 
-soc = soccer.Soccer()
+MONGO_SETTINGS = {
+    "MONGODB_SERVER": "localhost",
+    "MONGODB_PORT": 27017,
+    "MONGODB_DB": "soccer-test",
+    "MONGODB_AUTH_DB": "user-data",
+    "MONGODB_USER": "soccer",
+    "MONGODB_PASSWORD": "kickoffpassshootgoal"
+}
+
+soc = soccer.Soccer(mongo_settings=MONGO_SETTINGS)
 writer = soccer.writers.BasicWriter()
 dc = soccer.data_connectors.data_connector.DataConnector()
 fdo = soccer.data_connectors.FDOConnector()
     
+def test_search_team():
+    teams = soc.search_team("borussia")
+    print(teams)
+
+def test_search_player():
+    players = soc.search_player("Götze")
+    print(players)
+
 def test_season_date():
     assert soccer.util.get_season_from_date(datetime.date(2015,4,29)) == 2014
 
