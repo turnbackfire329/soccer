@@ -14,7 +14,7 @@ class BootstrapWriter(BasicWriter):
     def league_table(self, table):
         if table is None:
             return "I could not calculate a table. Maybe the season does not exist or no fixtures have been played?"
-        html = "<table class='table table-striped table-hover table-condensed'><thead><tr><th>#</th><th>Team</th><th>P</th><th class='hidden-xs'>W</th><th class='hidden-xs'>D</th><th class='hidden-xs'>L</th><th>Goals</th><th class='hidden-xs'>Diff</th><th>Pts</th></tr></thead><tbody>"
+        html = "<table class='datatable table table-striped table-hover table-condensed'><thead><tr><th>#</th><th>Team</th><th>P</th><th class='hidden-xs'>W</th><th class='hidden-xs'>D</th><th class='hidden-xs'>L</th><th>Goals</th><th class='hidden-xs'>Diff</th><th>Pts</th></tr></thead><tbody>"
 
         try:
             display_negative_points = POINT_RULES[table['point_rule']]['DISPLAY_NEGATIVE_POINTS']
@@ -50,9 +50,8 @@ class BootstrapWriter(BasicWriter):
             if len(teams) == 1:
                 team = teams[0]
                 for standing in table['standings']:
-                    self.logger.info(standing)
-                    if standing['teamId'] == team:
-                        rank = standing['position']
+                    if standing['teamId'] == team['team_id']:
+                        rank = standing['position'] - 1 
                         start_pos = rank - 2
                         end_pos = rank + 3
                         break
@@ -117,7 +116,7 @@ class BootstrapWriter(BasicWriter):
 
         seasons = ranks_of_teams.keys()
 
-        html = "<table class='table table-striped table-hover table-condensed'><thead><tr><th>Team</th>"
+        html = "<table class='datatable table table-striped table-hover table-condensed'><thead><tr><th>Team</th>"
 
         for season in seasons:
             html = html + "<th>" + season_to_string(season) + "</th>"
@@ -125,10 +124,10 @@ class BootstrapWriter(BasicWriter):
         html = html + "</tr></thead><tbody>"
 
         for team in teams:
-            html = html + f"<tr><td>{team}</td>"
+            html = html + f"<tr><td>{team['name']}</td>"
             for season in seasons:
-                if team in ranks_of_teams[season]:
-                    position = ranks_of_teams[season][team]
+                if team['team_id'] in ranks_of_teams[season]:
+                    position = ranks_of_teams[season][team['team_id']]
                 else:
                     position = "-"
                 html = html + f"<td>{position}</td>"
@@ -150,4 +149,28 @@ class BootstrapWriter(BasicWriter):
         html = html + rank_table_html
         html = html + "</p></div></div>"
 
+        return html
+
+    def goal_table(self, goal_table, player=None):
+        html = "<table class='table table-striped table-hover table-condensed'><thead><tr><th>Player</th><th>P</th><th>G</th></tr></thead><tbody>"
+
+        for player_goals in goal_table:
+            if player is not None and player_goals['player_id'] == player['player_id']:
+                html = html + f"<tr class='success'><td>{player_goals['name']}</td><td>{player_goals['playedGames']}</td><td>{player_goals['goals']}</td></tr>"
+            else:
+                html = html + f"<tr><td>{player_goals['name']}</td><td>{player_goals['playedGames']}</td><td>{player_goals['goals']}</td></tr>"
+
+        html = html + "</tbody></table>"
+        return html
+    
+    def assist_table(self, assist_table, player=None):
+        html = "<table class='table table-striped table-hover table-condensed'><thead><tr><th>Player</th><th>P</th><th>A</th></tr></thead><tbody>"
+
+        for player_assists in assist_table:
+            if player is not None and player_assists['player_id'] == player['player_id']:
+                html = html + f"<tr class='success'><td>{player_assists['name']}</td><td>{player_assists['playedGames']}</td><td>{player_assists['assists']}</td></tr>"
+            else:
+                html = html + f"<tr><td>{player_assists['name']}</td><td>{player_assists['playedGames']}</td><td>{player_assists['assists']}</td></tr>"
+
+        html = html + "</tbody></table>"
         return html

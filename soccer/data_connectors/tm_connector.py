@@ -52,7 +52,8 @@ class TMConnector(DataConnector):
         }
 
         if teams is not None:
-            findDict["$and"] = [{"$or":[{ "homeTeam.id": { "$in": teams }}, { "awayTeam.id": { "$in": teams }}]}]
+            team_ids = self._get_team_ids_from_teams(teams)
+            findDict["$and"] = [{"$or":[{ "homeTeam.id": { "$in": team_ids }}, { "awayTeam.id": { "$in": team_ids }}]}]
 
         if timeFrame["type"] == "date":
             if "$and" in findDict:
@@ -276,6 +277,7 @@ class TMConnector(DataConnector):
     def get_ranks_of_teams(self, league_code, teams, timeFrame):
 
         ranks = {}
+        team_ids = self._get_team_ids_from_teams(teams)
 
         if timeFrame is None:
             timeFrame = {
@@ -299,7 +301,7 @@ class TMConnector(DataConnector):
                 standings = table['standings']
 
                 for standing in standings:
-                    if standing['teamId'] in teams:
+                    if standing['teamId'] in team_ids:
                         ranks[season][standing['teamId']] = standing['position']
 
         return ranks

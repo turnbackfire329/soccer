@@ -128,10 +128,13 @@ class DataConnector(object):
         points_for_draw = POINT_RULES[point_rule]['DRAW_POINTS']
 
         if teams is not None:
-            for team in teams:
+            team_ids = self._get_team_ids_from_teams(teams)
+            for team in team_ids:
                 teamStandings[team] = deepcopy(EMPTY_TEAM_STANDINGS)
                 teamData = self.get_team(team)
                 teamStandings[team]["teamName"] = teamData["name"]
+        else:
+            team_ids = None
 
         for fixture in fixtures:
             fixture = self.enrich_fixture(fixture)
@@ -139,7 +142,7 @@ class DataConnector(object):
                 homeId = fixture["homeTeam"]["team_id"]
                 awayId = fixture["awayTeam"]["team_id"]
 
-                if teams is None or (home and homeId in teams and (not head2headOnly or awayId in teams)):
+                if team_ids is None or (home and homeId in team_ids and (not head2headOnly or awayId in team_ids)):
                     if homeId not in teamStandings:
                         teamStandings[homeId] = deepcopy(EMPTY_TEAM_STANDINGS)
                         teamData = self.get_team(homeId)
@@ -167,7 +170,7 @@ class DataConnector(object):
                     teamStandings[homeId]["losses"] =                       teamStandings[homeId]["losses"] + int(fixture["result"]["lossesHomeTeam"])
                     teamStandings[homeId]["goalDifference"] =              teamStandings[homeId]["goals"] - teamStandings[homeId]["goalsAgainst"] 
 
-                if teams is None or ( away and awayId in teams and (not head2headOnly or homeId in teams)):
+                if team_ids is None or ( away and awayId in team_ids and (not head2headOnly or homeId in team_ids)):
                     if awayId not in teamStandings:
                         teamStandings[awayId] = deepcopy(EMPTY_TEAM_STANDINGS)
                         teamData = self.get_team(awayId)
@@ -393,3 +396,7 @@ class DataConnector(object):
             else:
                 return None
         return d
+
+    def _get_team_ids_from_teams(self, teams):
+        return [team['team_id'] for team in teams]
+
