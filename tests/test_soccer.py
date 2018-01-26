@@ -18,8 +18,9 @@ dc = soccer.data_connectors.data_connector.DataConnector()
 fdo = soccer.data_connectors.FDOConnector()
     
 def test_search_team():
-    teams = soc.search_team("borussia")
-    print(teams)
+    teams = soc.search_team("gunners")
+    for team in teams:
+        print(team['name'] + " (" + str(team['score']) + ")")
 
 def test_search_player():
     players = soc.search_player("Götze")

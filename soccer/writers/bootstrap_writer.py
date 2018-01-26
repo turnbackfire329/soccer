@@ -102,6 +102,9 @@ class BootstrapWriter(BasicWriter):
         return html
 
     def fixture_list(self, fixtures):
+        if fixtures is None:
+            return "No fixtures found"
+        
         html = "<table class='table table-striped table-hover table-condensed'><thead><tr><th class='hidden-xs'>Date</th></th><th class='text-right'>Home</th><th colspan='3' class='text-center'>Result</th><th>Away</th></tr></thead><tbody>"
 
         for fixture in fixtures:

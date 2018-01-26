@@ -39,7 +39,7 @@ class DataConnector(object):
     def get_league_table_by_league_code(self, league_code, season, matchday):
         pass
     
-    def get_fixtures(self, competitionData):
+    def get_fixtures(self, league_code=None, teams=None, timeFrame=None):
         pass
 
     def get_fixtures_by_league_code(self, league_code, season):

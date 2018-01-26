@@ -23,6 +23,8 @@ class BasicWriter(object):
         print(title_table)
 
     def fixture_list(self, fixtures):
+        if fixtures is None:
+            print("No fixtures found")
         print(fixtures)   
 
     def ranks_teams(self, ranks_of_teams):

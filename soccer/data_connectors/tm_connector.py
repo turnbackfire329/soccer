@@ -44,62 +44,83 @@ class TMConnector(DataConnector):
     def get_fixtures_by_league_code(self, league_code, season):
         pass
 
-    def get_fixtures(self, league_code, teams=None, timeFrame=None):
-        timeFrame = self._check_timeFrame(timeFrame=timeFrame)
+    def get_fixtures(self, league_code=None, teams=None, timeFrame=None, count=None, future=None):
+        if league_code is None and teams is None:
+            return None
 
-        findDict = {
-            "league_code": league_code
-        }
+        findDict = {}
+        if league_code is not None:
+            findDict['league_code'] = league_code
 
         if teams is not None:
             team_ids = self._get_team_ids_from_teams(teams)
-            findDict["$and"] = [{"$or":[{ "homeTeam.id": { "$in": team_ids }}, { "awayTeam.id": { "$in": team_ids }}]}]
+            findDict["$and"] = [{"$or":[{ "homeTeam.team_id": { "$in": team_ids }}, { "awayTeam.team_id": { "$in": team_ids }}]}]
 
-        if timeFrame["type"] == "date":
-            if "$and" in findDict:
+        if timeFrame is None and count is not None:
+            if future is True:
                 findDict["$and"].extend([
-                    {"date":{ "$gte": timeFrame["date_from"]}}, 
-                    {"date":{ "$lte": timeFrame["date_to"]}},
+                    {"date":{ "$gte": datetime.datetime.now()}}, 
                 ])
-            else: 
-                findDict["$and"] = [{"date":{ "$gte": timeFrame["date_from"]}}, {"date":{ "$lte": timeFrame["date_to"]}}]
-        elif timeFrame["type"] == "season":
-            if "$and" in findDict:
-                findDict["$and"].extend([
-                    {'season': {'$gte': timeFrame["season_from"]}},
-                    {'season': {'$lte': timeFrame["season_to"]}}
-                ])
-            else: 
-                findDict["$and"] = [{'season': {'$gte': timeFrame["season_from"]}},{'season': {'$lte': timeFrame["season_to"]}}]
-        elif timeFrame["type"] == "matchday":
-            if "$and" in findDict:
-                findDict["$and"].extend([
-                    {'season': {'$gte': timeFrame["season_from"]}},
-                    {'season': {'$lte': timeFrame["season_to"]}},
-                ])
-            else: 
-                findDict["$and"] = [{'season': {'$gte': timeFrame["season_from"]}},{'season': {'$lte': timeFrame["season_to"]}}]
-
-            if timeFrame["season_from"] != timeFrame["season_to"]:
-                findMatchday = [{
-                    "$and": [{"season": { "$gt": timeFrame["season_from"]}}, {"season": { "$lt": timeFrame["season_to"]}}]
-                },{
-                    "$and": [{"season": { "$eq": timeFrame["season_from"]}}, {"matchday": { "$gte": timeFrame["matchday_from"]}}]
-                },{
-                    "$and": [{"season": { "$eq": timeFrame["season_to"]}}, {"matchday": { "$lte": timeFrame["matchday_to"]}}]
-                }]
-                findDict["$and"].append({"$or":findMatchday})
             else:
                 findDict["$and"].extend([
-                    {"matchday": { "$lte": timeFrame["matchday_to"]}},
-                    {"matchday": { "$gte": timeFrame["matchday_from"]}},
+                    {"date":{ "$lte": datetime.datetime.now()}}, 
                 ])
+        else:
+            timeFrame = self._check_timeFrame(timeFrame=timeFrame)
+
+            if timeFrame["type"] == "date":
+                if "$and" in findDict:
+                    findDict["$and"].extend([
+                        {"date":{ "$gte": timeFrame["date_from"]}}, 
+                        {"date":{ "$lte": timeFrame["date_to"]}},
+                    ])
+                else: 
+                    findDict["$and"] = [{"date":{ "$gte": timeFrame["date_from"]}}, {"date":{ "$lte": timeFrame["date_to"]}}]
+            elif timeFrame["type"] == "season":
+                if "$and" in findDict:
+                    findDict["$and"].extend([
+                        {'season': {'$gte': timeFrame["season_from"]}},
+                        {'season': {'$lte': timeFrame["season_to"]}}
+                    ])
+                else: 
+                    findDict["$and"] = [{'season': {'$gte': timeFrame["season_from"]}},{'season': {'$lte': timeFrame["season_to"]}}]
+            elif timeFrame["type"] == "matchday":
+                if "$and" in findDict:
+                    findDict["$and"].extend([
+                        {'season': {'$gte': timeFrame["season_from"]}},
+                        {'season': {'$lte': timeFrame["season_to"]}},
+                    ])
+                else: 
+                    findDict["$and"] = [{'season': {'$gte': timeFrame["season_from"]}},{'season': {'$lte': timeFrame["season_to"]}}]
+
+                if timeFrame["season_from"] != timeFrame["season_to"]:
+                    findMatchday = [{
+                        "$and": [{"season": { "$gt": timeFrame["season_from"]}}, {"season": { "$lt": timeFrame["season_to"]}}]
+                    },{
+                        "$and": [{"season": { "$eq": timeFrame["season_from"]}}, {"matchday": { "$gte": timeFrame["matchday_from"]}}]
+                    },{
+                        "$and": [{"season": { "$eq": timeFrame["season_to"]}}, {"matchday": { "$lte": timeFrame["matchday_to"]}}]
+                    }]
+                    findDict["$and"].append({"$or":findMatchday})
+                else:
+                    findDict["$and"].extend([
+                        {"matchday": { "$lte": timeFrame["matchday_to"]}},
+                        {"matchday": { "$gte": timeFrame["matchday_from"]}},
+                    ])
 
         self.logger.debug(f"Looking for fixtures with the following findDict: {findDict}") 
-        fixtures = list(self.collections["fixtures"].find(findDict))
-        fixtures.sort(key=lambda x: x["date"])
-        return fixtures
 
+        if count is None:
+            count = 0
+
+        if future is None or future is True:
+            fixtures = list(self.collections["fixtures"].find(findDict).sort('date', ASCENDING).limit(count))
+        else:
+            fixtures = list(self.collections["fixtures"].find(findDict).sort('date', DESCENDING).limit(count))
+
+
+        #fixtures.sort(key=lambda x: x["date"], reverse=not future)
+        return fixtures
 
     def get_team(self, team_id):
         return self.collections['teams'].find_one({'team_id':team_id})

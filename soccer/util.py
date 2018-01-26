@@ -1,6 +1,7 @@
 """ Helper methods """
 
 import datetime
+import pymongo
 
 SORT_OPTIONS = {
     "POINTS": "points",
@@ -8,10 +9,6 @@ SORT_OPTIONS = {
     "GOALS_AGAINST": "goalsAgainst",
     "DIFFERENCE": "goalDifference"
 }
-
-LEAGUE_CODES: ['BL1', 'BL2', 'BL3', 'PL', 'EL1',
-               'ELC', 'PD', 'SD', 'SA', 'SB', 'FL1', 'FL2']
-
 
 def get_season_from_date(date):
     if date.month < 8:

@@ -41,42 +41,6 @@ class Soccer(object):
         else:
             self.writer = BasicWriter()
 
-    def get_fixtures_by_date(self, league_code, teams, startDate, endDate):
-        # get season from the date range
-        fixtures = []
-        seasons = get_season_range(startDate, endDate)
-        for season in seasons:
-            fixtures_season = self.dc.get_fixtures_by_league_code(league_code, season)
-            for fixture in fixtures_season:
-                fixture = self.dc.enrich_fixture(fixture)
-
-                if teams is None or fixture["homeTeam"]["team_id"] in teams or fixture["awayTeam"]["team_id"] in teams:
-                    if startDate <= fixture["dateObject"] and endDate >= fixture["dateObject"]:
-                        fixtures.append(fixture)
-        return fixtures
-
-    def get_fixtures_by_count(self, league_code, teams, future, count):
-        if teams is None:
-            return
-
-        fixtures = {}
-        season = self.season
-        date = datetime.datetime.now()
-        stop_search = False
-        while not stop_search:
-            fixtures_season = self.dc.get_fixtures_by_league_code(league_code, season)
-            fixtures_season = self.dc.sort_fixtures(fixtures_season, future)
-
-            for fixture in fixtures_season:
-                fixture = self.dc.enrich_fixture(fixture)
-                if (future and fixture["dateObject"] > date ) or ( not future and fixture["dateObject"] < date):
-                    # TODO: add fixture to team array
-                    # team = []
-                    pass
-                else:
-                    # TODO: add exception
-                    pass
-
     def get_table(self, league_code, teams=None, timeFrame=None, rank=None):
         if (rank is None and teams is None) or (rank is not None and teams is not None):
             return self.writer.league_table(self.dc.get_table(league_code=league_code, teams=teams, timeFrame=timeFrame))
@@ -91,9 +55,8 @@ class Soccer(object):
                     ranks_of_teams=self.dc.get_ranks_of_teams(league_code=league_code, teams=teams, timeFrame=timeFrame), 
                     teams=teams)
 
-
-    def get_fixtures(self, league_code, teams=None, timeFrame=None):
-        return self.writer.fixture_list(self.dc.get_fixtures(league_code=league_code, teams=teams, timeFrame=timeFrame))
+    def get_fixtures(self, league_code=None, teams=None, timeFrame=None, count=None, future=None):
+        return self.writer.fixture_list(self.dc.get_fixtures(league_code=league_code, teams=teams, timeFrame=timeFrame, count=count, future=future))
 
     def get_current_matchday(self, competition):
         return self.dc.get_current_matchday(competition)
