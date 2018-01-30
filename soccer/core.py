@@ -67,41 +67,14 @@ class Soccer(object):
         else:
             return self.writer.ranks_teams(self.dc.get_ranks_of_teams(league_code=league_code, teams=teams, timeFrame=timeFrame))
 
-    def get_league_table(self, league_code, season=None, matchday=None, sortBy=None, ascending=None, home=True, away=True, teams=None, head2headOnly=False):
-        # sanity checks
-        if sortBy is None:
-            sortBy = (SORT_OPTIONS["POINTS"], SORT_OPTIONS["DIFFERENCE"], SORT_OPTIONS["GOALS"])
+    def get_goal_table(self, league_code=None, players=None, timeFrame=None):
+        return self.writer.goal_table(self.dc.get_scorer_table(league_code=league_code, players=players, timeFrame=timeFrame))
 
-        if ascending is None:
-            ascending = (-1, -1, -1)
-
-        if season is None:
-            season = self.season
-
-        if not home and not away:
-            return {}
-
-        if self.dc is None:
-            raise NoDataConnectorException(f'There is no data connector for {season}', season)
-
-        if teams is None:
-            # standard case: just load the table
-            standings = self.dc.get_league_table_by_league_code(league_code, season, matchday)
-
-        else:
-            # load fixtures and compute table
-            fixtures = self.dc.get_fixtures_by_league_code(league_code, season)
-
-            standings = {
-                "standing": self.dc.compute_team_standings(fixtures, teams=teams, home=home, away=away, head2headOnly=head2headOnly)
-            }
-
-        if home and not away:
-            standings = self.dc.convert_league_table(standings)
-        elif not home and away:
-            standings = self.dc.convert_league_table(standings, home=False)
-        standings["standing"] = self.dc.sort_league_table(standings["standing"], sortBy, ascending)
-        return standings
+    def get_assist_table(self, league_code=None, players=None, timeFrame=None):
+        return self.writer.assist_table(self.dc.get_scorer_table(league_code=league_code, players=players, timeFrame=timeFrame))
+    
+    def get_scorer_table(self, league_code=None, players=None, timeFrame=None):
+        return self.writer.scorer_table(self.dc.get_scorer_table(league_code=league_code, players=players, timeFrame=timeFrame))
 
     def search_team(self, query):
         return self.dc.search_team(query)

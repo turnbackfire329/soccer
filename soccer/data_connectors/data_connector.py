@@ -32,17 +32,8 @@ class DataConnector(object):
 
     def get_competition(self, league_code):
         pass
-
-    def get_league_table(self, competitionData, matchday):
-        pass
-
-    def get_league_table_by_league_code(self, league_code, season, matchday):
-        pass
     
     def get_fixtures(self, league_code=None, teams=None, timeFrame=None):
-        pass
-
-    def get_fixtures_by_league_code(self, league_code, season):
         pass
 
     def get_ranks_of_teams(self, league_code, teams, timeFrame):
@@ -199,6 +190,43 @@ class DataConnector(object):
                     teamStandings[awayId]["goalDifference"] =              teamStandings[awayId]["goals"] - teamStandings[awayId]["goalsAgainst"]
 
         return list(teamStandings.values())
+
+    def compute_scorer_table(self, fixtures, players=None):
+        scorer_table = []
+        player_dict = {}
+        player_ids = self._get_player_ids_from_players(players)
+
+        for fixture in fixtures:
+            for goal in fixture['goals']:
+                if players is None or goal['player_id'] in player_ids:
+                    if goal['player_id'] not in player_dict:
+                        player_dict[goal['player_id']] = {
+                            'goals': 1,
+                            'assists': 0,
+                            'scorers': 1,
+                            'playedGames': 1,
+                            'player_id': goal['player_id'],
+                            'player_name': goal['player_name'],
+                        }
+                    else:
+                        player_dict[goal['player_id']]['goals'] += 1
+                        player_dict[goal['player_id']]['scorers'] += 1
+            for assist in fixture['assists']:
+                if players is None or assist['player_id'] in player_ids:
+                    if assist['player_id'] not in player_dict:
+                        player_dict[assist['player_id']] = {
+                            'goals': 0,
+                            'assists': 1,
+                            'scorers': 1,
+                            'playedGames': 1,
+                            'player_id': assist['player_id'],
+                            'player_name': assist['player_name'],
+                        }
+                    else:
+                        player_dict[assist['player_id']]['assists'] += 1
+                        player_dict[assist['player_id']]['scorers'] += 1
+
+        return list(player_dict.values())
 
     def _get_seasons_from_timeframe(self, timeFrame):
         timeFrame = self._check_timeFrame(timeFrame)
@@ -398,5 +426,12 @@ class DataConnector(object):
         return d
 
     def _get_team_ids_from_teams(self, teams):
+        if teams is None or not isinstance(teams, list):
+            return []
         return [team['team_id'] for team in teams]
+
+    def _get_player_ids_from_players(self, players):
+        if players is None or not isinstance(players, list):
+            return []
+        return [player['player_id'] for player in players]
 

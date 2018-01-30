@@ -155,25 +155,52 @@ class BootstrapWriter(BasicWriter):
         return html
 
     def goal_table(self, goal_table, player=None):
+        if goal_table is None:
+            return ""
+        else:
+            goal_table.sort(key=lambda x: x['goals'], reverse=True)
+
         html = "<table class='table table-striped table-hover table-condensed'><thead><tr><th>Player</th><th>P</th><th>G</th></tr></thead><tbody>"
 
         for player_goals in goal_table:
             if player is not None and player_goals['player_id'] == player['player_id']:
-                html = html + f"<tr class='success'><td>{player_goals['name']}</td><td>{player_goals['playedGames']}</td><td>{player_goals['goals']}</td></tr>"
+                html = html + f"<tr class='success'><td>{player_goals['player_name']}</td><td>{player_goals['playedGames']}</td><td>{player_goals['goals']}</td></tr>"
             else:
-                html = html + f"<tr><td>{player_goals['name']}</td><td>{player_goals['playedGames']}</td><td>{player_goals['goals']}</td></tr>"
+                html = html + f"<tr><td>{player_goals['player_name']}</td><td>{player_goals['playedGames']}</td><td>{player_goals['goals']}</td></tr>"
 
         html = html + "</tbody></table>"
         return html
     
     def assist_table(self, assist_table, player=None):
-        html = "<table class='table table-striped table-hover table-condensed'><thead><tr><th>Player</th><th>P</th><th>A</th></tr></thead><tbody>"
+        if assist_table is None:
+            return ""
+        else:
+            assist_table.sort(key=lambda x: x['assists'], reverse=True)
+
+        html = "<table class='table table-striped table-hover table-condensed '><thead><tr><th>Player</th><th>P</th><th>A</th></tr></thead><tbody>"
 
         for player_assists in assist_table:
             if player is not None and player_assists['player_id'] == player['player_id']:
-                html = html + f"<tr class='success'><td>{player_assists['name']}</td><td>{player_assists['playedGames']}</td><td>{player_assists['assists']}</td></tr>"
+                html = html + f"<tr class='success'><td>{player_assists['player_name']}</td><td>{player_assists['playedGames']}</td><td>{player_assists['assists']}</td></tr>"
             else:
-                html = html + f"<tr><td>{player_assists['name']}</td><td>{player_assists['playedGames']}</td><td>{player_assists['assists']}</td></tr>"
+                html = html + f"<tr><td>{player_assists['player_name']}</td><td>{player_assists['playedGames']}</td><td>{player_assists['assists']}</td></tr>"
+
+        html = html + "</tbody></table>"
+        return html
+
+    def scorer_table(self, scorer_table, player=None):
+        if scorer_table is None:
+            return ""
+        else:
+            scorer_table.sort(key=lambda x: x['scorers'], reverse=True)
+
+        html = "<table class='table table-striped table-hover table-condensed datatable'><thead><tr><th>Player</th><th>P</th><th>G</th><th>A</th><th>S</th></tr></thead><tbody>"
+
+        for player_scorers in scorer_table:
+            if player is not None and player_scorers['player_id'] == player['player_id']:
+                html = html + f"<tr class='success'><td>{player_scorers['player_name']}</td><td>{player_scorers['playedGames']}</td><td>{player_scorers['goals']}</td><td>{player_scorers['assists']}</td><td>{player_scorers['goals'] + player_scorers['assists']}</td></tr>"
+            else:
+                html = html + f"<tr><td>{player_scorers['player_name']}</td><td>{player_scorers['playedGames']}</td><td>{player_scorers['goals']}</td><td>{player_scorers['assists']}</td><td>{player_scorers['goals'] + player_scorers['assists']}</td></tr>"
 
         html = html + "</tbody></table>"
         return html

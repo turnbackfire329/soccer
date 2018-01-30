@@ -17,21 +17,31 @@ writer = soccer.writers.BasicWriter()
 dc = soccer.data_connectors.data_connector.DataConnector()
 fdo = soccer.data_connectors.FDOConnector()
     
-def test_search_team():
-    teams = soc.search_team("gunners")
-    for team in teams:
-        print(team['name'] + " (" + str(team['score']) + ")")
+def test_compute_goal_table():
+    fixtures = [
+        {
+            "goals":[{
+                'player_id':1,
+                'player_name': "Player #1",
+            },{
+                'player_id':1,
+                'player_name': "Player #1",
+            },],
+            "assists": [{
+                'player_id':2,
+                'player_name': "Player #2",
+            },{
+                'player_id':3,
+                'player_name': "Player #3",
+            },],
+        }
+    ]
 
-def test_search_player():
-    players = soc.search_player("Götze")
-    print(players)
+    scorer_table = dc.compute_scorer_table(fixtures)
+    assert len(scorer_table) == 3
 
 def test_season_date():
     assert soccer.util.get_season_from_date(datetime.date(2015,4,29)) == 2014
-
-def test_table():
-    standings = soc.get_league_table("BL1", season="2016", home=True, away=True)
-    assert standings["standing"][2]["goals"] == 72
 
 def test_deep_get():
     d = {

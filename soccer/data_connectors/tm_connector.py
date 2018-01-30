@@ -35,16 +35,7 @@ class TMConnector(DataConnector):
             }
             self.logger.info(f"Mongo DB connection initialized")
 
-    def get_league_table(self, competitionData, matchday):
-        pass
-
-    def get_league_table_by_league_code(self, league_code, season, matchday):
-        pass
-    
-    def get_fixtures_by_league_code(self, league_code, season):
-        pass
-
-    def get_fixtures(self, league_code=None, teams=None, timeFrame=None, count=None, future=None):
+    def get_fixtures(self, league_code=None, teams=None, players=None, timeFrame=None, count=None, future=None):
         if league_code is None and teams is None:
             return None
 
@@ -118,8 +109,6 @@ class TMConnector(DataConnector):
         else:
             fixtures = list(self.collections["fixtures"].find(findDict).sort('date', DESCENDING).limit(count))
 
-
-        #fixtures.sort(key=lambda x: x["date"], reverse=not future)
         return fixtures
 
     def get_team(self, team_id):
@@ -159,13 +148,6 @@ class TMConnector(DataConnector):
             return existingTable
 
     def get_title_table(self, league_code, teams=None, timeFrame=None, rank=None):
-        # title table entry
-        # {  
-        #   teamName: 'abc',
-        #   numberOfTitles: #,
-        #   seasons: []
-        # }
-
         if rank is None:
             rank = 0
         elif rank == 'won':
@@ -233,7 +215,7 @@ class TMConnector(DataConnector):
 
         point_rule = self._get_point_rule_from_timeframe(competition, timeFrame)
 
-        fixtures = self.get_fixtures(league_code, teams, timeFrame)
+        fixtures = self.get_fixtures(league_code=league_code, teams=teams, timeFrame=timeFrame)
 
         self.logger.debug(f"Found {len(fixtures)} fixtures")
 
@@ -296,7 +278,6 @@ class TMConnector(DataConnector):
         return self.collections["competitions"].find_one({'league_code': league_code})
 
     def get_ranks_of_teams(self, league_code, teams, timeFrame):
-
         ranks = {}
         team_ids = self._get_team_ids_from_teams(teams)
 
@@ -326,6 +307,15 @@ class TMConnector(DataConnector):
                         ranks[season][standing['teamId']] = standing['position']
 
         return ranks
+
+    def get_scorer_table(self, league_code=None, teams=None, players=None, timeFrame=None):
+        if league_code is None and players is None and teams is None:
+            return None
+    
+        timeFrame = self._check_timeFrame(timeFrame)
+        fixtures = self.get_fixtures(league_code=league_code, teams=teams, players=players, timeFrame=timeFrame)
+        score_table = self.compute_scorer_table(fixtures)
+        return score_table
 
     def search_player(self, query):
         query = query.translate({ ord(c): None for c in string.whitespace }).lower()
