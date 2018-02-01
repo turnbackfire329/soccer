@@ -2,6 +2,7 @@
 
 import datetime
 import pymongo
+import configparser
 
 SORT_OPTIONS = {
     "POINTS": "points",
@@ -9,6 +10,21 @@ SORT_OPTIONS = {
     "GOALS_AGAINST": "goalsAgainst",
     "DIFFERENCE": "goalDifference"
 }
+
+def get_settings(path):
+    config = configparser.ConfigParser()
+    config.read(path)
+
+    settings = {}
+
+    settings['mongodb_server'] = config['DEFAULT'].get('mongodb_server', 'localhost')
+    settings['mongodb_port'] = config['DEFAULT'].get('mongodb_port', 27017)
+    settings['mongodb_db'] = config['DEFAULT'].get('mongodb_db', 'soccer-test')
+    settings['mongodb_auth_db'] = config['DEFAULT'].get('mongodb_auth_db', 'user-data')
+    settings['mongodb_user'] = config['DEFAULT'].get('mongodb_user', 'soccer')
+    settings['mongodb_password'] = config['DEFAULT'].get('mongodb_password', 'kickoffpassshootgoal')
+    
+    return settings
 
 def get_season_from_date(date):
     if date.month < 8:
