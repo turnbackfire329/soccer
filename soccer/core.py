@@ -68,13 +68,13 @@ class Soccer(object):
             return self.writer.ranks_teams(self.dc.get_ranks_of_teams(league_code=league_code, teams=teams, timeFrame=timeFrame))
 
     def get_goal_table(self, league_code=None, players=None, timeFrame=None):
-        return self.writer.goal_table(self.dc.get_scorer_table(league_code=league_code, players=players, timeFrame=timeFrame))
+        return self.writer.goal_table(self.dc.get_scorer_table(league_code=league_code, players=players, timeFrame=timeFrame, goals=True))
 
     def get_assist_table(self, league_code=None, players=None, timeFrame=None):
-        return self.writer.assist_table(self.dc.get_scorer_table(league_code=league_code, players=players, timeFrame=timeFrame))
+        return self.writer.assist_table(self.dc.get_scorer_table(league_code=league_code, players=players, timeFrame=timeFrame, assists=True))
     
     def get_scorer_table(self, league_code=None, players=None, timeFrame=None):
-        return self.writer.scorer_table(self.dc.get_scorer_table(league_code=league_code, players=players, timeFrame=timeFrame))
+        return self.writer.scorer_table(self.dc.get_scorer_table(league_code=league_code, players=players, timeFrame=timeFrame, goals=True, assists=True))
 
     def search_team(self, query):
         return self.dc.search_team(query)

@@ -36,7 +36,7 @@ class TMConnector(DataConnector):
             self.logger.info(f"Mongo DB connection initialized")
 
     def get_fixtures(self, league_code=None, teams=None, players=None, timeFrame=None, count=None, future=None):
-        if league_code is None and teams is None:
+        if league_code is None and teams is None and players is None:
             return None
 
         findDict = {}
@@ -46,6 +46,16 @@ class TMConnector(DataConnector):
         if teams is not None:
             team_ids = self._get_team_ids_from_teams(teams)
             findDict["$and"] = [{"$or":[{ "homeTeam.team_id": { "$in": team_ids }}, { "awayTeam.team_id": { "$in": team_ids }}]}]
+
+        if players is not None:
+            player_ids = self._get_player_ids_from_players(players)
+            findDict["$and"] = [{"$or":[
+                                        { "goals.player_id": { "$in": player_ids }}, 
+                                        { "assists.player_id": { "$in": player_ids }},
+                                        { "cards.player_id": { "$in": player_ids }},
+                                        { "lineups.home.lineup.playerid": { "$in": player_ids }},
+                                        { "lineups.away.lineup.playerid": { "$in": player_ids }},
+                                        ]}]
 
         if timeFrame is None and count is not None:
             if future is True:
@@ -308,13 +318,13 @@ class TMConnector(DataConnector):
 
         return ranks
 
-    def get_scorer_table(self, league_code=None, teams=None, players=None, timeFrame=None):
+    def get_scorer_table(self, league_code=None, teams=None, players=None, timeFrame=None, goals=False, assists=False):
         if league_code is None and players is None and teams is None:
             return None
     
         timeFrame = self._check_timeFrame(timeFrame)
         fixtures = self.get_fixtures(league_code=league_code, teams=teams, players=players, timeFrame=timeFrame)
-        score_table = self.compute_scorer_table(fixtures)
+        score_table = self.compute_scorer_table(fixtures, players=players, goals=goals, assists=assists)
         return score_table
 
     def search_player(self, query):

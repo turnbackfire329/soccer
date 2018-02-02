@@ -191,40 +191,64 @@ class DataConnector(object):
 
         return list(teamStandings.values())
 
-    def compute_scorer_table(self, fixtures, players=None):
+    def compute_scorer_table(self, fixtures, players=None, goals=False, assists=False):
         scorer_table = []
         player_dict = {}
         player_ids = self._get_player_ids_from_players(players)
 
         for fixture in fixtures:
-            for goal in fixture['goals']:
-                if players is None or goal['player_id'] in player_ids:
-                    if goal['player_id'] not in player_dict:
-                        player_dict[goal['player_id']] = {
-                            'goals': 1,
-                            'assists': 0,
-                            'scorers': 1,
-                            'playedGames': 1,
-                            'player_id': goal['player_id'],
-                            'player_name': goal['player_name'],
-                        }
-                    else:
-                        player_dict[goal['player_id']]['goals'] += 1
-                        player_dict[goal['player_id']]['scorers'] += 1
-            for assist in fixture['assists']:
-                if players is None or assist['player_id'] in player_ids:
-                    if assist['player_id'] not in player_dict:
-                        player_dict[assist['player_id']] = {
+            home_lineup = fixture['lineups']['home']['lineup']
+            away_lineup = fixture['lineups']['away']['lineup']
+
+            for player in home_lineup+away_lineup:
+                if players is None or player['playerId'] in player_ids:
+                    if player['playerId'] not in player_dict:
+                        player_dict[player['playerId']] = {
                             'goals': 0,
-                            'assists': 1,
-                            'scorers': 1,
+                            'assists': 0,
+                            'scorers': 0,
                             'playedGames': 1,
-                            'player_id': assist['player_id'],
-                            'player_name': assist['player_name'],
+                            'player_id': player['playerId'],
+                            'player_name': player['name'],
+                            'last_fixture': fixture['_id'],
                         }
                     else:
-                        player_dict[assist['player_id']]['assists'] += 1
-                        player_dict[assist['player_id']]['scorers'] += 1
+                        if player_dict[player['playerId']]['last_fixture'] != fixture['_id']:
+                            player_dict[player['playerId']]['playedGames'] += 1
+                            player_dict[player['playerId']]['last_fixture'] = fixture['_id']
+
+            if goals:
+                for goal in fixture['goals']:
+                    if players is None or goal['player_id'] in player_ids:
+                        if goal['player_id'] not in player_dict:
+                            player_dict[goal['player_id']] = {
+                                'goals': 1,
+                                'assists': 0,
+                                'scorers': 1,
+                                'playedGames': 1,
+                                'player_id': goal['player_id'],
+                                'player_name': goal['player_name'],
+                                'last_fixture': fixture['_id'],
+                            }
+                        else:
+                            player_dict[goal['player_id']]['goals'] += 1
+                            player_dict[goal['player_id']]['scorers'] += 1
+            if assists:
+                for assist in fixture['assists']:
+                    if players is None or assist['player_id'] in player_ids:
+                        if assist['player_id'] not in player_dict:
+                            player_dict[assist['player_id']] = {
+                                'goals': 0,
+                                'assists': 1,
+                                'scorers': 1,
+                                'playedGames': 1,
+                                'player_id': assist['player_id'],
+                                'player_name': assist['player_name'],
+                                'last_fixture': fixture['_id'],
+                            }
+                        else:
+                            player_dict[assist['player_id']]['assists'] += 1
+                            player_dict[assist['player_id']]['scorers'] += 1
 
         return list(player_dict.values())
 

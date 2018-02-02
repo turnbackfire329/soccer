@@ -14,7 +14,10 @@ class BootstrapWriter(BasicWriter):
     def league_table(self, table):
         if table is None:
             return "I could not calculate a table. Maybe the season does not exist or no fixtures have been played?"
-        html = "<table class='datatable table table-striped table-hover table-condensed'><thead><tr><th>#</th><th>Team</th><th>P</th><th class='hidden-xs'>W</th><th class='hidden-xs'>D</th><th class='hidden-xs'>L</th><th>Goals</th><th class='hidden-xs'>Diff</th><th>Pts</th></tr></thead><tbody>"
+
+        random_id = random.randint(0, 99999)
+
+        html = "<table id='table_" + str(random_id) + "' class='datatable table table-striped table-hover table-condensed'><thead><tr><th>#</th><th>Team</th><th>P</th><th class='hidden-xs'>W</th><th class='hidden-xs'>D</th><th class='hidden-xs'>L</th><th>Goals</th><th class='hidden-xs'>Diff</th><th>Pts</th></tr></thead><tbody>"
 
         try:
             display_negative_points = POINT_RULES[table['point_rule']]['DISPLAY_NEGATIVE_POINTS']
@@ -36,7 +39,9 @@ class BootstrapWriter(BasicWriter):
         if rank is None and teams is None:
             return self.league_table(table)
 
-        html = "<table class='table table-striped table-hover table-condensed'><thead><tr><th>#</th><th>Team</th><th>P</th><th class='hidden-xs'>W</th><th class='hidden-xs'>D</th><th class='hidden-xs'>L</th><th>Goals</th><th class='hidden-xs'>Diff</th><th>Pts</th></tr></thead><tbody>"
+        random_id = random.randint(0, 99999)
+
+        html = "<table id='table_" + str(random_id) + "' class='table table-striped table-hover table-condensed'><thead><tr><th>#</th><th>Team</th><th>P</th><th class='hidden-xs'>W</th><th class='hidden-xs'>D</th><th class='hidden-xs'>L</th><th>Goals</th><th class='hidden-xs'>Diff</th><th>Pts</th></tr></thead><tbody>"
 
         try:
             display_negative_points = POINT_RULES[table['point_rule']]['DISPLAY_NEGATIVE_POINTS']
@@ -93,7 +98,9 @@ class BootstrapWriter(BasicWriter):
         return html
 
     def title_table(self, title_table):
-        html = "<table class='table table-striped table-hover table-condensed'><thead><tr><th>Team</th><th>#</th><th>Seasons</th></tr></thead><tbody>"
+        random_id = random.randint(0, 99999)
+
+        html = "<table id='table_" + str(random_id) + "' class='table table-striped table-hover table-condensed'><thead><tr><th>Team</th><th>#</th><th>Seasons</th></tr></thead><tbody>"
         
         for team in title_table:
             html = html + f"<tr><td>{team['teamName']}</td><td>{team['numberOfTitles']}</td><td>{', '.join(str(season) for season in team['seasons'])}</td></tr>"
@@ -105,7 +112,9 @@ class BootstrapWriter(BasicWriter):
         if fixtures is None:
             return "No fixtures found"
         
-        html = "<table class='table table-striped table-hover table-condensed'><thead><tr><th class='hidden-xs'>Date</th></th><th class='text-right'>Home</th><th colspan='3' class='text-center'>Result</th><th>Away</th></tr></thead><tbody>"
+        random_id = random.randint(0, 99999)
+
+        html = "<table id='table_" + str(random_id) + "' class='table table-striped table-hover table-condensed'><thead><tr><th class='hidden-xs'>Date</th></th><th class='text-right'>Home</th><th colspan='3' class='text-center'>Result</th><th>Away</th></tr></thead><tbody>"
 
         for fixture in fixtures:
             html = html + f"<tr><td class='hidden-xs'>{fixture['date'].strftime('%x %X')}</td><td class='text-right'>{fixture['homeTeam']['name']}</td><td class='text-right'>{fixture['result']['goalsHomeTeam']}</td><td class='text-center'>:</td><td class='text-left'>{fixture['result']['goalsAwayTeam']}</td><td>{fixture['awayTeam']['name']}</td></tr>"
@@ -119,7 +128,9 @@ class BootstrapWriter(BasicWriter):
 
         seasons = ranks_of_teams.keys()
 
-        html = "<table class='datatable table table-striped table-hover table-condensed'><thead><tr><th>Team</th>"
+        random_id = random.randint(0, 99999)
+
+        html = "<table id='table_" + str(random_id) + "' class='datatable table table-striped table-hover table-condensed'><thead><tr><th>Team</th>"
 
         for season in seasons:
             html = html + "<th>" + season_to_string(season) + "</th>"
@@ -160,7 +171,14 @@ class BootstrapWriter(BasicWriter):
         else:
             goal_table.sort(key=lambda x: x['goals'], reverse=True)
 
-        html = "<table class='table table-striped table-hover table-condensed'><thead><tr><th>Player</th><th>P</th><th>G</th></tr></thead><tbody>"
+        if len(goal_table) > 25:
+            datatable_class = "datatablePaging"
+        else:
+            datatable_class = "datatable"
+
+        random_id = random.randint(0, 99999)
+
+        html = "<table id='table_" + str(random_id) + "' class='table table-striped table-hover table-condensed " + datatable_class + "'><thead><tr><th>Player</th><th>P</th><th>G</th></tr></thead><tbody>"
 
         for player_goals in goal_table:
             if player is not None and player_goals['player_id'] == player['player_id']:
@@ -177,7 +195,14 @@ class BootstrapWriter(BasicWriter):
         else:
             assist_table.sort(key=lambda x: x['assists'], reverse=True)
 
-        html = "<table class='table table-striped table-hover table-condensed '><thead><tr><th>Player</th><th>P</th><th>A</th></tr></thead><tbody>"
+        if len(assist_table) > 25:
+            datatable_class = "datatablePaging"
+        else:
+            datatable_class = "datatable"
+
+        random_id = random.randint(0, 99999)
+
+        html = "<table id='table_" + str(random_id) + "' class='table table-striped table-hover table-condensed " + datatable_class + "'><thead><tr><th>Player</th><th>P</th><th>A</th></tr></thead><tbody>"
 
         for player_assists in assist_table:
             if player is not None and player_assists['player_id'] == player['player_id']:
@@ -194,7 +219,14 @@ class BootstrapWriter(BasicWriter):
         else:
             scorer_table.sort(key=lambda x: x['scorers'], reverse=True)
 
-        html = "<table class='table table-striped table-hover table-condensed datatable'><thead><tr><th>Player</th><th>P</th><th>G</th><th>A</th><th>S</th></tr></thead><tbody>"
+        if len(scorer_table) > 25:
+            datatable_class = "datatablePaging"
+        else:
+            datatable_class = "datatable"
+
+        random_id = random.randint(0, 99999)
+
+        html = "<table id='table_" + str(random_id) + "' class='table table-striped table-hover table-condensed " + datatable_class + "'><thead><tr><th>Player</th><th>P</th><th>G</th><th>A</th><th>S</th></tr></thead><tbody>"
 
         for player_scorers in scorer_table:
             if player is not None and player_scorers['player_id'] == player['player_id']:
