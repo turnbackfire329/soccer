@@ -8,6 +8,7 @@ import string
 from pymongo import MongoClient
 from scrapy.conf import settings
 from urllib.parse import quote_plus
+from ...util import get_settings
 from ..items import TeamItem, TeamSeasonItem, CompetitionItem, CompetitionSeasonItem, PlayerItem, FixtureItem
 from bson.objectid import ObjectId
 from scrapy.http import HtmlResponse
@@ -47,6 +48,7 @@ class TmcomSpider(scrapy.Spider):
     logger = logging.getLogger()
 
     def parse(self, response):
+        self.soccer_settings = get_settings()
         if response.status == 500:
             return 
 
@@ -75,10 +77,10 @@ class TmcomSpider(scrapy.Spider):
         if self.settings.get("UPDATE_FIXTURES") is not None and self.settings.get("UPDATE_FIXTURES") == 'TRUE':
             self.logger.info("Updating existing fixtures. Loading updateable fixtures from the database ...")
             uri = "mongodb://%s:%s@%s:%s" % (
-                quote_plus(settings['MONGODB_USER']), quote_plus(settings['MONGODB_PASSWORD']), settings['MONGODB_SERVER'], settings['MONGODB_PORT'])
+                quote_plus(self.soccer_settings['mongodb_user']), quote_plus(self.soccer_settings['mongodb_password']), self.soccer_settings['mongodb_server'], self.soccer_settings['mongodb_port'])
 
-            client = MongoClient(uri, authSource=settings['MONGODB_AUTH_DB'])
-            db = client[settings['MONGODB_DB']]
+            client = MongoClient(uri, authSource=self.soccer_settings['mongodb_auth_db'])
+            db = client[self.soccer_settings['mongodb_db']]
             update_fixtures = list(db["fixtures"].find(
                 {
                     'league_code': item_competition['league_code'],

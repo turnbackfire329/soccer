@@ -15,6 +15,7 @@ from scrapy.conf import settings
 from urllib.parse import quote_plus
 from scrapy.exceptions import DropItem
 from .items import TeamItem, TeamSeasonItem, PlayerItem, CompetitionItem, CompetitionSeasonItem, FixtureItem
+from ..util import get_settings
 
 COLLECTIONS = ["teams", "team_season", "competitions", "competition_season", "players", "fixtures"]
 
@@ -43,12 +44,13 @@ class ValidateItemPipeline(object):
 
 class MongoDBPipeline(object):
     def __init__(self):
+        self.soccer_settings = get_settings()
         uri = "mongodb://%s:%s@%s:%s" % (
-            quote_plus(settings['MONGODB_USER']), quote_plus(settings['MONGODB_PASSWORD']), settings['MONGODB_SERVER'], settings['MONGODB_PORT'])
+            quote_plus(self.soccer_settings['mongodb_user']), quote_plus(self.soccer_settings['mongodb_password']), self.soccer_settings['mongodb_server'], self.soccer_settings['mongodb_port'])
 
-        client = MongoClient(uri, authSource=settings['MONGODB_AUTH_DB'])
+        client = MongoClient(uri, authSource=self.soccer_settings['mongodb_auth_db'])
 
-        db = client[settings['MONGODB_DB']]
+        db = client[self.soccer_settings['mongodb_db']]
         self.collections = {
             "teams": db["teams"],
             "team_season": db["team_season"],

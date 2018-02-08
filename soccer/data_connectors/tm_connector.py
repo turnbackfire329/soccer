@@ -18,10 +18,10 @@ class TMConnector(DataConnector):
         DataConnector.__init__(self)
         if mongo_settings is not None:
             uri = "mongodb://%s:%s@%s:%s" % (
-                quote_plus(mongo_settings['MONGODB_USER']), quote_plus(mongo_settings['MONGODB_PASSWORD']), mongo_settings['MONGODB_SERVER'], mongo_settings['MONGODB_PORT'])
+                quote_plus(mongo_settings['mongodb_user']), quote_plus(mongo_settings['mongodb_password']), mongo_settings['mongodb_server'], mongo_settings['mongodb_port'])
 
-            self.mdb = MongoClient(uri, authSource=mongo_settings['MONGODB_AUTH_DB'])
-            self.db = self.mdb[mongo_settings['MONGODB_DB']]
+            self.mdb = MongoClient(uri, authSource=mongo_settings['mongodb_auth_db'])
+            self.db = self.mdb[mongo_settings['mongodb_db']]
             self.collections = {
                 "teams": self.db["teams"],
                 "team_season": self.db["team_season"],

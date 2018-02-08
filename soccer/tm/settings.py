@@ -71,13 +71,6 @@ ITEM_PIPELINES = {
    'tm.pipelines.MongoDBPipeline': 800
 }
 
-MONGODB_SERVER = "localhost"
-MONGODB_PORT = 27017
-MONGODB_DB = "soccer-test"
-MONGODB_AUTH_DB = "user-data"
-MONGODB_USER = "soccer"
-MONGODB_PASSWORD = "kickoffpassshootgoal"
-
 DUPEFILTER_DEBUG = True
 
 LOG_LEVEL = "WARNING"

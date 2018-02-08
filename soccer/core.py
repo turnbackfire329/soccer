@@ -5,17 +5,21 @@ import datetime
 from .data_connectors import FDOConnector, TMConnector
 from .writers import BasicWriter, HTMLWriter, JSONWriter, BootstrapWriter
 from .exceptions import NoDataConnectorException, SoccerDBNotFoundException
-from .util import get_current_season, get_season_range, SORT_OPTIONS
+from .util import get_settings, get_current_season, get_season_range, SORT_OPTIONS
 
 class Soccer(object):
     """
     Central class for the soccer data api.
     """
 
-    def __init__(self, fdo_apikey=None, mongo_settings=None, writer='basic'):
+    def __init__(self, config_path=None, fdo_apikey=None, writer='basic'):
         self.dc = None
+        if config_path is None:
+            config_path = "soccer.cfg"
+
         self.season = get_current_season()
-        self._create_data_connectors(fdo_apikey=fdo_apikey, mongo_settings=mongo_settings)
+        self.settings = get_settings(config_path)
+        self._create_data_connectors(fdo_apikey=fdo_apikey, mongo_settings=self.settings)
         self._get_writer(writer)
 
     def _create_data_connectors(self, fdo_apikey=None, mongo_settings=None):

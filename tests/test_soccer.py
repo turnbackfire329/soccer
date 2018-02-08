@@ -3,16 +3,7 @@
 import datetime
 from .context import soccer
 
-MONGO_SETTINGS = {
-    "MONGODB_SERVER": "localhost",
-    "MONGODB_PORT": 27017,
-    "MONGODB_DB": "soccer-test",
-    "MONGODB_AUTH_DB": "user-data",
-    "MONGODB_USER": "soccer",
-    "MONGODB_PASSWORD": "kickoffpassshootgoal"
-}
-
-soc = soccer.Soccer(mongo_settings=MONGO_SETTINGS)
+soc = soccer.Soccer()
 writer = soccer.writers.BasicWriter()
 dc = soccer.data_connectors.data_connector.DataConnector()
 fdo = soccer.data_connectors.FDOConnector()

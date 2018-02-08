@@ -11,7 +11,7 @@ SORT_OPTIONS = {
     "DIFFERENCE": "goalDifference"
 }
 
-def get_settings(path):
+def get_settings(path=None):
     config = configparser.ConfigParser()
     config.read(path)
 
