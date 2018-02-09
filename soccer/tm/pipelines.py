@@ -14,8 +14,8 @@ from pymongo import MongoClient
 from scrapy.conf import settings
 from urllib.parse import quote_plus
 from scrapy.exceptions import DropItem
-from .items import TeamItem, TeamSeasonItem, PlayerItem, CompetitionItem, CompetitionSeasonItem, FixtureItem
-from ..util import get_settings
+from soccer.tm.items import TeamItem, TeamSeasonItem, PlayerItem, CompetitionItem, CompetitionSeasonItem, FixtureItem
+from soccer.util import get_settings
 
 COLLECTIONS = ["teams", "team_season", "competitions", "competition_season", "players", "fixtures"]
 
