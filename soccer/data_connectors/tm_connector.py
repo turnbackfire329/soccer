@@ -8,7 +8,7 @@ from urllib.parse import quote_plus
 from pymongo import MongoClient, ASCENDING, DESCENDING
 from .data_connector import DataConnector
 from ..exceptions import InvalidTimeFrameException
-from ..util import get_current_season, make_ngrams
+from ..util import get_current_season, make_ngrams, DEFAULT_TIE_BREAK_RULES
 
 class TMConnector(DataConnector):
     """
@@ -123,6 +123,9 @@ class TMConnector(DataConnector):
 
     def get_team(self, team_id):
         return self.collections['teams'].find_one({'team_id':team_id})
+
+    def get_player(self, player_id):
+        return self.collections['players'].find_one({'player_id':player_id})
 
     def get_table(self, league_code, teams=None, timeFrame=None):
         timeFrame = self._check_timeFrame(timeFrame)
