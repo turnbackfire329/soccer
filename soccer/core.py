@@ -1,6 +1,7 @@
 """ Central class for the soccer data api. """
 import time
 import datetime
+import logging
 
 from .data_connectors import FDOConnector, TMConnector
 from .writers import BasicWriter, HTMLWriter, JSONWriter, BootstrapWriter
@@ -13,12 +14,14 @@ class Soccer(object):
     """
 
     def __init__(self, config_path=None, fdo_apikey=None, writer='basic'):
+        self.logger = logging.getLogger(__name__)
         self.dc = None
         if config_path is None:
             config_path = "soccer.cfg"
 
         self.season = get_current_season()
         self.settings = get_settings(config_path)
+        self.logger.debug(f"Loaded Settings: {self.settings}")
         self._create_data_connectors(fdo_apikey=fdo_apikey, mongo_settings=self.settings)
         self._get_writer(writer)
 
