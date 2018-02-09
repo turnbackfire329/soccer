@@ -3,6 +3,9 @@
 import datetime
 import pymongo
 import configparser
+import logging
+
+import os
 
 SORT_OPTIONS = {
     "POINTS": "points",
@@ -12,17 +15,25 @@ SORT_OPTIONS = {
 }
 
 def get_settings(path=None):
-    config = configparser.ConfigParser()
-    config.read(path)
+    settings = {
+        'mongodb_server': 'localhost',
+        'mongodb_port': '27017',
+        'mongodb_db': 'soccer-test',
+        'mongodb_auth_db': 'user-data',
+        'mongodb_user': 'soccer',
+        'mongodb_password': 'kickoffpassshootgoal',
+    }
+    
+    if path is not None:
+        config = configparser.ConfigParser()
+        config.read(path)
 
-    settings = {}
-
-    settings['mongodb_server'] = config['DEFAULT'].get('mongodb_server', 'localhost')
-    settings['mongodb_port'] = config['DEFAULT'].get('mongodb_port', 27017)
-    settings['mongodb_db'] = config['DEFAULT'].get('mongodb_db', 'soccer-test')
-    settings['mongodb_auth_db'] = config['DEFAULT'].get('mongodb_auth_db', 'user-data')
-    settings['mongodb_user'] = config['DEFAULT'].get('mongodb_user', 'soccer')
-    settings['mongodb_password'] = config['DEFAULT'].get('mongodb_password', 'kickoffpassshootgoal')
+        settings['mongodb_server'] = config['DEFAULT'].get('mongodb_server', 'localhost')
+        settings['mongodb_port'] = config['DEFAULT'].get('mongodb_port', '27017')
+        settings['mongodb_db'] = config['DEFAULT'].get('mongodb_db', 'soccer-test')
+        settings['mongodb_auth_db'] = config['DEFAULT'].get('mongodb_auth_db', 'user-data')
+        settings['mongodb_user'] = config['DEFAULT'].get('mongodb_user', 'soccer')
+        settings['mongodb_password'] = config['DEFAULT'].get('mongodb_password', 'kickoffpassshootgoal')
     
     return settings
 
