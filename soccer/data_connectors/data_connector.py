@@ -136,7 +136,7 @@ class DataConnector(object):
 
         for fixture in fixtures:
             fixture = self.enrich_fixture(fixture)
-            if fixture["dateObject"] < datetime.datetime.now() and fixture["result"]["goalsHomeTeam"] != "-":
+            if fixture["dateObject"] <= datetime.datetime.now() and fixture["result"]["goalsHomeTeam"] != "-":
                 homeId = fixture["homeTeam"]["team_id"]
                 awayId = fixture["awayTeam"]["team_id"]
 

@@ -3,14 +3,12 @@
 import datetime
 from .context import soccer
 
-soc = soccer.Soccer()
-writer = soccer.writers.BasicWriter()
 dc = soccer.data_connectors.data_connector.DataConnector()
-fdo = soccer.data_connectors.FDOConnector()
     
 def test_compute_goal_table():
     fixtures = [
         {
+            "_id": "1",
             "goals":[{
                 'player_id':1,
                 'player_name': "Player #1",
@@ -25,10 +23,14 @@ def test_compute_goal_table():
                 'player_id':3,
                 'player_name': "Player #3",
             },],
+            "lineups": {
+                "home": {},
+                "away": {},
+            }
         }
     ]
 
-    scorer_table = dc.compute_scorer_table(fixtures)
+    scorer_table = dc.compute_scorer_table(fixtures, goals=True, assists=True)
     assert len(scorer_table) == 3
 
 def test_season_date():
