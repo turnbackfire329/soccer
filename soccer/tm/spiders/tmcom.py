@@ -8,8 +8,8 @@ import string
 from pymongo import MongoClient
 from scrapy.conf import settings
 from urllib.parse import quote_plus
-from ...util import get_settings
-from ..items import TeamItem, TeamSeasonItem, CompetitionItem, CompetitionSeasonItem, PlayerItem, FixtureItem
+from soccer.util import get_settings
+from soccer.tm.items import TeamItem, TeamSeasonItem, CompetitionItem, CompetitionSeasonItem, PlayerItem, FixtureItem
 from bson.objectid import ObjectId
 from scrapy.http import HtmlResponse
 
@@ -418,7 +418,16 @@ class TmcomSpider(scrapy.Spider):
                 self.logger.warning(f"Lineup incomplete: {item_fixture['url']}")
         else:
             self.logger.warning(f"No lineups: {item_fixture['url']}")
-            item_fixture['lineups'] = {}
+            item_fixture['lineups'] = {
+                'home': {},
+                'away': {},
+            }
+
+        # substitutions
+        substitutions = response.css("[id=sb-wechsel] > ul > li.sb-aktion-heim") 
+
+        item_fixture['lineups']['home']['subs'] = self.parseSubs(response.css("[id=sb-wechsel] > ul > li.sb-aktion-heim"))
+        item_fixture['lineups']['away']['subs'] = self.parseSubs(response.css("[id=sb-wechsel] > ul > li.sb-aktion-gast"))
 
         yield item_fixture
 
@@ -540,7 +549,7 @@ class TmcomSpider(scrapy.Spider):
                 playerDict = {
                     'url': self.base_url + url,
                     'name': player.css("::text").extract_first(),
-                    'id': url.split("/")[4]
+                    'player_id': url.split("/")[4]
                 }
                 if '/profil/trainer/' in url:
                     manager = playerDict
@@ -571,7 +580,7 @@ class TmcomSpider(scrapy.Spider):
                 'url': self.base_url + url,
                 'name': player.css("::text").extract_first()
             }
-            playerDict['playerId'] = url.split("/")[4]
+            playerDict['player_id'] = url.split("/")[4]
             playerArray.append(playerDict)
         return playerArray
 
@@ -589,3 +598,32 @@ class TmcomSpider(scrapy.Spider):
                 'name': manager.css("::text").extract_first(),
                 'id': url.split("/")[4]
             }
+
+    def parseSubs(self, substitutions):
+        subs = []
+
+        for substitution in substitutions:
+            minute_style = substitution.css(".sb-sprite-uhr-klein ::attr(style)").extract_first()
+            [_,column,row] = minute_style.split(" ")
+            column = int(column[1:-2])
+            row = int(row[1:-3])
+            minute = int((row / 36 * 10) + (column / 36) + 1)
+
+            sub_in = substitution.css(".sb-aktion-wechsel-ein")
+            sub_out = substitution.css(".sb-aktion-wechsel-aus")
+
+            sub = {
+                'minute': minute,
+                'reason': sub_out.css("::text").extract()[2][2:-1],
+                'in': {
+                    'player_id': sub_in.css("a::attr(id)").extract_first(),
+                    'name': sub_in.css("a::attr(title)").extract_first(),
+                },
+                'out': {
+                    'player_id': sub_out.css("a::attr(id)").extract_first(),
+                    'name': sub_out.css("a::attr(title)").extract_first(),
+                },
+            }
+            subs.append(sub)
+
+        return subs
