@@ -3,6 +3,7 @@
 import datetime
 import logging
 from copy import deepcopy
+from ..exceptions import InvalidTimeFrameException
 from ..util import (
     DEFAULT_POINT_RULE,
     DEFAULT_POINT_RULE_WIN_POINTS,
