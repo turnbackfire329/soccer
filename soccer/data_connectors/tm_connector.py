@@ -35,7 +35,7 @@ class TMConnector(DataConnector):
             }
             self.logger.info(f"Mongo DB connection initialized")
 
-    def get_fixtures(self, league_code=None, teams=None, players=None, timeFrame=None, count=None, future=None):
+    def get_fixtures(self, league_code=None, teams=None, players=None, timeFrame=None, count=None, future=None, home=True, away=True):
         if league_code is None and teams is None and players is None:
             return None
 
@@ -45,17 +45,32 @@ class TMConnector(DataConnector):
 
         if teams is not None:
             team_ids = self._get_team_ids_from_teams(teams)
-            findDict["$and"] = [{"$or":[{ "homeTeam.team_id": { "$in": team_ids }}, { "awayTeam.team_id": { "$in": team_ids }}]}]
+            findDict_team_or = []
+            if home == True:
+                findDict_team_or = findDict_team_or + [{ "homeTeam.team_id": { "$in": team_ids }}]
+            if away == True:
+                findDict_team_or = findDict_team_or + [{ "awayTeam.team_id": { "$in": team_ids }}]
+
+            findDict["$and"] = [{"$or":findDict_team_or}]
 
         if players is not None:
             player_ids = self._get_player_ids_from_players(players)
-            findDict["$and"] = [{"$or":[
+            findDict_player_or = [
                                         { "goals.player_id": { "$in": player_ids }}, 
                                         { "assists.player_id": { "$in": player_ids }},
                                         { "cards.player_id": { "$in": player_ids }},
+            ]
+            if home == True:
+                findDict_player_or = findDict_player_or + [
                                         { "lineups.home.lineup.playerid": { "$in": player_ids }},
+                                        { "lineups.home.subs.in.playerid": { "$in": player_ids }},
+                                        ]
+            if away == True:
+                findDict_player_or = findDict_player_or + [
                                         { "lineups.away.lineup.playerid": { "$in": player_ids }},
-                                        ]}]
+                                        { "lineups.away.subs.in.playerid": { "$in": player_ids }},
+                                        ]
+            findDict["$and"] = [{"$or":findDict_player_or}]
 
         if timeFrame is None and count is not None:
             if future is True:
@@ -357,6 +372,7 @@ class TMConnector(DataConnector):
                 }
             }, {
                 "team_id": True,
+                "crest_url": True,
                 "name": True,
                 "score": {
                     "$meta": "textScore"

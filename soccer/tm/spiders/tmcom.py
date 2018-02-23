@@ -156,10 +156,12 @@ class TmcomSpider(scrapy.Spider):
                 competitions=[item_team_season["competition"]],
             )
 
-            yield item_team
+            yield scrapy.Request(item_team['url'], callback=self.parseTeam, meta={
+                'item_team': item_team,
+            })
 
             yield scrapy.Request(item_team_season['url'], callback=self.parseTeamSeason, meta={
-                'item_team_season': item_team_season
+                'item_team_season': item_team_season,
             })
 
 
@@ -178,14 +180,16 @@ class TmcomSpider(scrapy.Spider):
             })
 
         yield item_competition_season
-
+    
     def parseTeam(self, response):
         if response.status == 500:
             return 
 
         item_team = response.meta['item_team']
+        item_team['crest_url'] = response.css(".dataBild > img::attr(src)").extract_first()
+
         yield item_team
-        
+
     def parseTeamSeason(self, response):
         if response.status == 500:
             return 

@@ -34,7 +34,7 @@ class DataConnector(object):
     def get_competition(self, league_code):
         pass
     
-    def get_fixtures(self, league_code=None, teams=None, timeFrame=None):
+    def get_fixtures(self, league_code=None, teams=None, players=None, timeFrame=None, count=None, future=None, home=True, away=True):
         pass
 
     def get_ranks_of_teams(self, league_code, teams, timeFrame):
@@ -44,6 +44,7 @@ class DataConnector(object):
         return {
             "team_id": team_id,
             "name": "Team " + str(team_id),
+            "crest_url": "https://commons.wikimedia.org/wiki/File:Borussia_Dortmund_logo.svg"
         }
 
     def get_player(self, player_id):
@@ -146,6 +147,7 @@ class DataConnector(object):
                         teamData = self.get_team(homeId)
                         teamStandings[homeId]["teamName"] = teamData["name"]
                         teamStandings[homeId]["teamId"] = homeId
+                        teamStandings[homeId]["crest_url"] = teamData["crest_url"]
 
                     teamStandings[homeId]["home"]["goals"] =                teamStandings[homeId]["home"]["goals"] + int(fixture["result"]["goalsHomeTeam"])
                     teamStandings[homeId]["home"]["goalsAgainst"] =         teamStandings[homeId]["home"]["goalsAgainst"] + int(fixture["result"]["goalsAwayTeam"])
@@ -174,6 +176,7 @@ class DataConnector(object):
                         teamData = self.get_team(awayId)
                         teamStandings[awayId]["teamName"] = teamData["name"]
                         teamStandings[awayId]["teamId"] = awayId
+                        teamStandings[awayId]["crest_url"] = teamData["crest_url"]
                         
                     teamStandings[awayId]["away"]["goals"] =                teamStandings[awayId]["away"]["goals"] + int(fixture["result"]["goalsAwayTeam"])
                     teamStandings[awayId]["away"]["goalsAgainst"] =         teamStandings[awayId]["away"]["goalsAgainst"] + int(fixture["result"]["goalsHomeTeam"])
@@ -219,13 +222,12 @@ class DataConnector(object):
             if 'subs' in fixture['lineups']['away']:
                 away_subs = fixture['lineups']['away']['subs']
 
-            for player in home_lineup+away_lineup:
+            for (player, team_name) in [(player, fixture['homeTeam']['name']) for player in home_lineup]+[(player, fixture['awayTeam']['name']) for player in away_lineup]:
                 if 'player_id' in player and (players is None or player['player_id'] in player_ids):
                     if player['player_id'] is None:
                         self.logger.info(f"Player ID in lineup is None. Fixture is: {fixture['_id']}")
                     else:
                         if player['player_id'] not in player_dict:
-
                             player_db = self.get_player(player['player_id'])
                             if player_db is None:
                                 self.logger.info(f"Player ID {player['player_id']} does not exist in DB. Fixture is: {fixture['_id']}")
@@ -238,13 +240,16 @@ class DataConnector(object):
                                     'player_id': player['player_id'],
                                     'player_name': player_db['name'],
                                     'last_fixture': fixture['_id'],
+                                    'team': [team_name],
                                 }
                         else:
                             if player_dict[player['player_id']]['last_fixture'] != fixture['_id']:
                                 player_dict[player['player_id']]['playedGames'] += 1
                                 player_dict[player['player_id']]['last_fixture'] = fixture['_id']
+                                if team_name not in player_dict[player['player_id']]['team']:
+                                    player_dict[player['player_id']]['team'] = player_dict[player['player_id']]['team'] + [team_name]
 
-            for sub in home_subs+away_subs:
+            for (sub, team_name) in [(sub, fixture['homeTeam']['name']) for sub in home_subs]+[(sub, fixture['awayTeam']['name']) for sub in away_subs]:
                 if sub['in']['player_id'] is None:
                     self.logger.info(f"Player ID in substitution is None. Possibly injury when no substitue left. Fixture is: {fixture['_id']}")
                 else:
@@ -261,34 +266,43 @@ class DataConnector(object):
                                     'player_id': sub['in']['player_id'],
                                     'player_name': player_db['name'],
                                     'last_fixture': fixture['_id'],
+                                    'team': [team_name],
                                 }
                     else:
                         if player_dict[sub['in']['player_id']]['last_fixture'] != fixture['_id']:
                             player_dict[sub['in']['player_id']]['playedGames'] += 1
                             player_dict[sub['in']['player_id']]['last_fixture'] = fixture['_id']
+                            if team_name not in player_dict[sub['in']['player_id']]['team']:
+                                player_dict[sub['in']['player_id']]['team'] = player_dict[sub['in']['player_id']]['team'] + [team_name]
 
             if goals:
                 for goal in fixture['goals']:
-                    if 'player_id' in goal and (players is None or goal['player_id'] in player_ids):
-                        if goal['player_id'] not in player_dict:
-                            player_db = self.get_player(goal['player_id'])
-                            if player_db is None:
-                                self.logger.info(f"Player ID {goal['player_id']} does not exist in DB. Fixture is: {fixture['_id']}")
+                    if goal['type'] != 'Own-goal':
+                        team_name = fixture['homeTeam']['name'] if goal['team_id'] == fixture['homeTeam']['team_id'] else fixture['awayTeam']['name']
+                        if 'player_id' in goal and (players is None or goal['player_id'] in player_ids):
+                            if goal['player_id'] not in player_dict:
+                                player_db = self.get_player(goal['player_id'])
+                                if player_db is None:
+                                    self.logger.info(f"Player ID {goal['player_id']} does not exist in DB. Fixture is: {fixture['_id']}")
+                                else:
+                                    player_dict[goal['player_id']] = {
+                                        'goals': 1,
+                                        'assists': 0,
+                                        'scorers': 1,
+                                        'playedGames': 1,
+                                        'player_id': goal['player_id'],
+                                        'player_name': player_db['name'],
+                                        'last_fixture': fixture['_id'],
+                                        'team': [team_name],
+                                    }
                             else:
-                                player_dict[goal['player_id']] = {
-                                    'goals': 1,
-                                    'assists': 0,
-                                    'scorers': 1,
-                                    'playedGames': 1,
-                                    'player_id': goal['player_id'],
-                                    'player_name': player_db['name'],
-                                    'last_fixture': fixture['_id'],
-                                }
-                        else:
-                            player_dict[goal['player_id']]['goals'] += 1
-                            player_dict[goal['player_id']]['scorers'] += 1
+                                player_dict[goal['player_id']]['goals'] += 1
+                                player_dict[goal['player_id']]['scorers'] += 1
+                                if team_name not in player_dict[goal['player_id']]['team']:
+                                    player_dict[goal['player_id']]['team'] = player_dict[goal['player_id']]['team'] + [team_name]
             if assists:
                 for assist in fixture['assists']:
+                    team_name = fixture['homeTeam']['name'] if assist['team_id'] == fixture['homeTeam']['team_id'] else fixture['awayTeam']['name']
                     if 'player_id' in assist and (players is None or assist['player_id'] in player_ids):
                         if assist['player_id'] not in player_dict:
                             player_db = self.get_player(assist['player_id'])
@@ -303,10 +317,13 @@ class DataConnector(object):
                                     'player_id': assist['player_id'],
                                     'player_name': player_db['name'],
                                     'last_fixture': fixture['_id'],
+                                    'team': [team_name],
                                 }
                         else:
                             player_dict[assist['player_id']]['assists'] += 1
                             player_dict[assist['player_id']]['scorers'] += 1
+                            if team_name not in player_dict[assist['player_id']]['team']:
+                                player_dict[assist['player_id']]['team'] = player_dict[assist['player_id']]['team'] + [team_name]
 
         scorer_table = [x for x in list(player_dict.values()) if (goals == False and assists == False) or (goals == True and x['goals'] > 0) or (assists == True and x['assists'] > 0)]
 

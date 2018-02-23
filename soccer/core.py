@@ -62,8 +62,8 @@ class Soccer(object):
                     ranks_of_teams=self.dc.get_ranks_of_teams(league_code=league_code, teams=teams, timeFrame=timeFrame), 
                     teams=teams)
 
-    def get_fixtures(self, league_code=None, teams=None, timeFrame=None, count=None, future=None):
-        return self.writer.fixture_list(self.dc.get_fixtures(league_code=league_code, teams=teams, timeFrame=timeFrame, count=count, future=future))
+    def get_fixtures(self, league_code=None, teams=None, timeFrame=None, count=None, future=None, home=True, away=True):
+        return self.writer.fixture_list(self.dc.get_fixtures(league_code=league_code, teams=teams, timeFrame=timeFrame, count=count, future=future, home=home, away=away))
 
     def get_current_matchday(self, competition):
         return self.dc.get_current_matchday(competition)

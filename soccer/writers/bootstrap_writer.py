@@ -30,7 +30,9 @@ class BootstrapWriter(BasicWriter):
             else:
                 points = str(team['points'])
 
-            html = html + f"<tr><td>{team['position']}</td><td>{team['teamName']}</td><td>{team['playedGames']}</td><td class='hidden-xs'>{team['wins']}</td><td class='hidden-xs'>{team['draws']}</td><td class='hidden-xs'>{team['losses']}</td><td>{team['goals']}:{team['goalsAgainst']}</td><td class='hidden-xs'>{team['goals']-team['goalsAgainst']}</td><td>{points}</td></tr>"
+            crest_img = self._get_crest_img(team)
+
+            html = html + f"<tr><td>{team['position']}</td><td>{crest_img+team['teamName']}</td><td>{team['playedGames']}</td><td class='hidden-xs'>{team['wins']}</td><td class='hidden-xs'>{team['draws']}</td><td class='hidden-xs'>{team['losses']}</td><td>{team['goals']}:{team['goalsAgainst']}</td><td class='hidden-xs'>{team['goals']-team['goalsAgainst']}</td><td>{points}</td></tr>"
 
         html = html + "</tbody></table>"
         return html
@@ -86,10 +88,12 @@ class BootstrapWriter(BasicWriter):
             else:
                 points = str(team['points'])
 
+            crest_img = self._get_crest_img(team)
+
             if pos == rank:
-                html = html + f"<tr class='success'><td>{team['position']}</td><td>{team['teamName']}</td><td>{team['playedGames']}</td><td class='hidden-xs'>{team['wins']}</td><td class='hidden-xs'>{team['draws']}</td><td class='hidden-xs'>{team['losses']}</td><td>{team['goals']}:{team['goalsAgainst']}</td><td class='hidden-xs'>{team['goals']-team['goalsAgainst']}</td><td>{points}</td></tr>"
+                html = html + f"<tr class='success'><td>{team['position']}</td><td>{crest_img+team['teamName']}</td><td>{team['playedGames']}</td><td class='hidden-xs'>{team['wins']}</td><td class='hidden-xs'>{team['draws']}</td><td class='hidden-xs'>{team['losses']}</td><td>{team['goals']}:{team['goalsAgainst']}</td><td class='hidden-xs'>{team['goals']-team['goalsAgainst']}</td><td>{points}</td></tr>"
             else:
-                html = html + f"<tr><td>{team['position']}</td><td>{team['teamName']}</td><td>{team['playedGames']}</td><td class='hidden-xs'>{team['wins']}</td><td class='hidden-xs'>{team['draws']}</td><td class='hidden-xs'>{team['losses']}</td><td>{team['goals']}:{team['goalsAgainst']}</td><td class='hidden-xs'>{team['goals']-team['goalsAgainst']}</td><td>{points}</td></tr>"
+                html = html + f"<tr><td>{team['position']}</td><td>{crest_img+team['teamName']}</td><td>{team['playedGames']}</td><td class='hidden-xs'>{team['wins']}</td><td class='hidden-xs'>{team['draws']}</td><td class='hidden-xs'>{team['losses']}</td><td>{team['goals']}:{team['goalsAgainst']}</td><td class='hidden-xs'>{team['goals']-team['goalsAgainst']}</td><td>{points}</td></tr>"
 
         if rank and rank < len(table["standings"]) - 3:
             html = html + f"<tr><td colspan='9' class='text-center'>...</td></tr>"
@@ -103,7 +107,8 @@ class BootstrapWriter(BasicWriter):
         html = "<table id='table_" + str(random_id) + "' class='table table-striped table-hover table-condensed'><thead><tr><th>Team</th><th>#</th><th>Seasons</th></tr></thead><tbody>"
         
         for team in title_table:
-            html = html + f"<tr><td>{team['teamName']}</td><td>{team['numberOfTitles']}</td><td>{', '.join(str(season) for season in team['seasons'])}</td></tr>"
+            crest_img = self._get_crest_img(team)
+            html = html + f"<tr><td>{crest_img+team['teamName']}</td><td>{team['numberOfTitles']}</td><td>{', '.join(str(season) for season in team['seasons'])}</td></tr>"
         
         html = html + "</tbody></table>"
         return html
@@ -114,7 +119,7 @@ class BootstrapWriter(BasicWriter):
         
         random_id = random.randint(0, 99999)
 
-        html = "<table id='table_" + str(random_id) + "' class='table table-striped table-hover table-condensed'><thead><tr><th class='hidden-xs'>Date</th></th><th class='text-right'>Home</th><th colspan='3' class='text-center'>Result</th><th>Away</th></tr></thead><tbody>"
+        html = "<table id='table_" + str(random_id) + "' class='table table-striped table-hover table-condensed datatablePaging'><thead><tr><th class='hidden-xs'>Date</th></th><th class='text-right'>Home</th><th colspan='3' class='text-center'>Result</th><th>Away</th></tr></thead><tbody>"
 
         for fixture in fixtures:
             html = html + f"<tr><td class='hidden-xs'>{fixture['date'].strftime('%x %X')}</td><td class='text-right'>{fixture['homeTeam']['name']}</td><td class='text-right'>{fixture['result']['goalsHomeTeam']}</td><td class='text-center'>:</td><td class='text-left'>{fixture['result']['goalsAwayTeam']}</td><td>{fixture['awayTeam']['name']}</td></tr>"
@@ -147,7 +152,6 @@ class BootstrapWriter(BasicWriter):
                 html = html + f"<td>{position}</td>"
 
         html = html + "</tbody></table>"
-
         return html
 
     def rank_and_titles(self, rank_table, ranks_of_teams, teams=None):
@@ -171,20 +175,20 @@ class BootstrapWriter(BasicWriter):
         else:
             goal_table.sort(key=lambda x: x['goals'], reverse=True)
 
-        if len(goal_table) > 25:
+        if len(goal_table) > 30:
             datatable_class = "datatablePaging"
         else:
             datatable_class = "datatable"
 
         random_id = random.randint(0, 99999)
 
-        html = "<table id='table_" + str(random_id) + "' class='table table-striped table-hover table-condensed " + datatable_class + "'><thead><tr><th>Player</th><th>P</th><th>G</th></tr></thead><tbody>"
+        html = "<table id='table_" + str(random_id) + "' class='table table-striped table-hover table-condensed " + datatable_class + "'><thead><tr><th>Player</th><th class='hidden-xs'>Team</th><th>P</th><th>G</th></tr></thead><tbody>"
 
         for player_goals in goal_table:
             if player is not None and player_goals['player_id'] == player['player_id']:
-                html = html + f"<tr class='success'><td>{player_goals['player_name']}</td><td>{player_goals['playedGames']}</td><td>{player_goals['goals']}</td></tr>"
+                html = html + f"<tr class='success'><td>{player_goals['player_name']}</td><td class='hidden-xs'>{', '.join(player_goals['team'])}</td><td>{player_goals['playedGames']}</td><td>{player_goals['goals']}</td></tr>"
             else:
-                html = html + f"<tr><td>{player_goals['player_name']}</td><td>{player_goals['playedGames']}</td><td>{player_goals['goals']}</td></tr>"
+                html = html + f"<tr><td>{player_goals['player_name']}</td><td class='hidden-xs'>{', '.join(player_goals['team'])}</td><td>{player_goals['playedGames']}</td><td>{player_goals['goals']}</td></tr>"
 
         html = html + "</tbody></table>"
         return html
@@ -195,20 +199,20 @@ class BootstrapWriter(BasicWriter):
         else:
             assist_table.sort(key=lambda x: x['assists'], reverse=True)
 
-        if len(assist_table) > 25:
+        if len(assist_table) > 30:
             datatable_class = "datatablePaging"
         else:
             datatable_class = "datatable"
 
         random_id = random.randint(0, 99999)
 
-        html = "<table id='table_" + str(random_id) + "' class='table table-striped table-hover table-condensed " + datatable_class + "'><thead><tr><th>Player</th><th>P</th><th>A</th></tr></thead><tbody>"
+        html = "<table id='table_" + str(random_id) + "' class='table table-striped table-hover table-condensed " + datatable_class + "'><thead><tr><th>Player</th><th class='hidden-xs'>Team</th><th>P</th><th>A</th></tr></thead><tbody>"
 
         for player_assists in assist_table:
             if player is not None and player_assists['player_id'] == player['player_id']:
-                html = html + f"<tr class='success'><td>{player_assists['player_name']}</td><td>{player_assists['playedGames']}</td><td>{player_assists['assists']}</td></tr>"
+                html = html + f"<tr class='success'><td>{player_assists['player_name']}</td><td class='hidden-xs'>{', '.join(player_assists['team'])}</td><td>{player_assists['playedGames']}</td><td>{player_assists['assists']}</td></tr>"
             else:
-                html = html + f"<tr><td>{player_assists['player_name']}</td><td>{player_assists['playedGames']}</td><td>{player_assists['assists']}</td></tr>"
+                html = html + f"<tr><td>{player_assists['player_name']}</td><td class='hidden-xs'>{', '.join(player_assists['team'])}</td><td>{player_assists['playedGames']}</td><td>{player_assists['assists']}</td></tr>"
 
         html = html + "</tbody></table>"
         return html
@@ -219,20 +223,28 @@ class BootstrapWriter(BasicWriter):
         else:
             scorer_table.sort(key=lambda x: x['scorers'], reverse=True)
 
-        if len(scorer_table) > 25:
+        if len(scorer_table) > 30:
             datatable_class = "datatablePaging"
         else:
             datatable_class = "datatable"
 
         random_id = random.randint(0, 99999)
 
-        html = "<table id='table_" + str(random_id) + "' class='table table-striped table-hover table-condensed " + datatable_class + "'><thead><tr><th>Player</th><th>P</th><th>G</th><th>A</th><th>S</th></tr></thead><tbody>"
+        html = "<table id='table_" + str(random_id) + "' class='table table-striped table-hover table-condensed " + datatable_class + "'><thead><tr><th>Player</th><th class='hidden-xs'>Team</th><th>P</th><th>G</th><th>A</th><th>S</th></tr></thead><tbody>"
 
         for player_scorers in scorer_table:
             if player is not None and player_scorers['player_id'] == player['player_id']:
-                html = html + f"<tr class='success'><td>{player_scorers['player_name']}</td><td>{player_scorers['playedGames']}</td><td>{player_scorers['goals']}</td><td>{player_scorers['assists']}</td><td>{player_scorers['goals'] + player_scorers['assists']}</td></tr>"
+                html = html + f"<tr class='success'><td>{player_scorers['player_name']}</td><td class='hidden-xs'>{', '.join(player_scorers['team'])}</td><td>{player_scorers['playedGames']}</td><td>{player_scorers['goals']}</td><td>{player_scorers['assists']}</td><td>{player_scorers['goals'] + player_scorers['assists']}</td></tr>"
             else:
-                html = html + f"<tr><td>{player_scorers['player_name']}</td><td>{player_scorers['playedGames']}</td><td>{player_scorers['goals']}</td><td>{player_scorers['assists']}</td><td>{player_scorers['goals'] + player_scorers['assists']}</td></tr>"
+                html = html + f"<tr><td>{player_scorers['player_name']}</td><td class='hidden-xs'>{', '.join(player_scorers['team'])}</td><td>{player_scorers['playedGames']}</td><td>{player_scorers['goals']}</td><td>{player_scorers['assists']}</td><td>{player_scorers['goals'] + player_scorers['assists']}</td></tr>"
 
         html = html + "</tbody></table>"
         return html
+
+    def _get_crest_img(self, team, height=30):
+        if 'crest_url' in team and team['crest_url'] is not None:
+            crest_img = f"<img src='{team['crest_url']}' alt='{team['teamName']}' height='{height}' style='padding:3px;'/>"
+        else:
+            crest_img = ""
+        
+        return crest_img
