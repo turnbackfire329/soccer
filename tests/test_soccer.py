@@ -12,20 +12,36 @@ def test_compute_goal_table():
             "goals":[{
                 'player_id':1,
                 'player_name': "Player #1",
+                'type': 'goal',
+                'team_id': 1,
             },{
                 'player_id':1,
                 'player_name': "Player #1",
+                'type': 'goal',
+                'team_id': 1,
             },],
             "assists": [{
                 'player_id':2,
                 'player_name': "Player #2",
+                'type': 'goal',
+                'team_id': 1,
             },{
                 'player_id':3,
                 'player_name': "Player #3",
+                'type': 'goal',
+                'team_id': 1,
             },],
             "lineups": {
                 "home": {},
                 "away": {},
+            },
+            "homeTeam": {
+                "team_id": 1,
+                "name": "Team 1",
+            },
+            "awayTeam": {
+                "team_id": 2,
+                "name": "Team 2",
             }
         }
     ]

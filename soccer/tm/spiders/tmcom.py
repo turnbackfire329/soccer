@@ -428,8 +428,6 @@ class TmcomSpider(scrapy.Spider):
             }
 
         # substitutions
-        substitutions = response.css("[id=sb-wechsel] > ul > li.sb-aktion-heim") 
-
         item_fixture['lineups']['home']['subs'] = self.parseSubs(response.css("[id=sb-wechsel] > ul > li.sb-aktion-heim"))
         item_fixture['lineups']['away']['subs'] = self.parseSubs(response.css("[id=sb-wechsel] > ul > li.sb-aktion-gast"))
 

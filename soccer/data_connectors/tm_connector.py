@@ -200,12 +200,6 @@ class TMConnector(DataConnector):
             table = self.get_table(league_code,teams, temp_timeframe)
 
             if table is not None and table['status'] == self.TABLE_STATUS['done']:
-                temp_rank = rank
-                if rank == 'last':
-                    temp_rank = len(table['standings']) - 1
-                elif type(rank) == int:
-                    temp_rank = min(rank, len(table['standings'])) - 1
-
                 table_entry = table['standings'][rank]
                 if table_entry['teamName'] in title_table:
                     title_table_entry = title_table[table_entry['teamName']]
