@@ -17,17 +17,17 @@ class TmcomSpider(scrapy.Spider):
     name = 'tmcom'
     allowed_domains = ['transfermarkt.com']
     start_urls = ['https://www.transfermarkt.com/1-bundesliga/startseite/wettbewerb/L1',
-                  'https://www.transfermarkt.com/2-bundesliga/startseite/wettbewerb/L2',
-                  'https://www.transfermarkt.com/3-liga/startseite/wettbewerb/L3',
+                #   'https://www.transfermarkt.com/2-bundesliga/startseite/wettbewerb/L2',
+                #   'https://www.transfermarkt.com/3-liga/startseite/wettbewerb/L3',
                   'https://www.transfermarkt.com/premier-league/startseite/wettbewerb/GB1',
-                  'https://www.transfermarkt.com/championship/startseite/wettbewerb/GB2',
-                  'https://www.transfermarkt.com/league-one/startseite/wettbewerb/GB3',
+                #   'https://www.transfermarkt.com/championship/startseite/wettbewerb/GB2',
+                #   'https://www.transfermarkt.com/league-one/startseite/wettbewerb/GB3',
                   'https://www.transfermarkt.com/serie-a/startseite/wettbewerb/IT1',
-                  'https://www.transfermarkt.com/serie-b/startseite/wettbewerb/IT2',
+                #   'https://www.transfermarkt.com/serie-b/startseite/wettbewerb/IT2',
                   'https://www.transfermarkt.com/laliga/startseite/wettbewerb/ES1',
-                  'https://www.transfermarkt.com/laliga2/startseite/wettbewerb/ES2',
+                #   'https://www.transfermarkt.com/laliga2/startseite/wettbewerb/ES2',
                   'https://www.transfermarkt.com/ligue-1/startseite/wettbewerb/FR1',
-                  'https://www.transfermarkt.com/ligue-2/startseite/wettbewerb/FR2',
+                #   'https://www.transfermarkt.com/ligue-2/startseite/wettbewerb/FR2',
                  ]
 
     start_url_dict = {
