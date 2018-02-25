@@ -210,6 +210,8 @@ class TMConnector(DataConnector):
                 else:
                     title_table_entry = {
                         'teamName': table_entry['teamName'],
+                        'teamId': table_entry['teamId'],
+                        'crest_url': table_entry['crest_url'],
                         'numberOfTitles': 1,
                         'seasons': [season+1]
                     }
@@ -299,7 +301,7 @@ class TMConnector(DataConnector):
     def get_competition(self, league_code):
         return self.collections["competitions"].find_one({'league_code': league_code})
 
-    def get_ranks_of_teams(self, league_code, teams, timeFrame):
+    def get_ranks_of_teams(self, league_code, timeFrame, teams=None, rank=None):
         ranks = {}
         team_ids = self._get_team_ids_from_teams(teams)
 
@@ -325,9 +327,8 @@ class TMConnector(DataConnector):
                 standings = table['standings']
 
                 for standing in standings:
-                    if standing['teamId'] in team_ids:
+                    if (not team_ids or standing['teamId'] in team_ids) and (rank is None or rank == standing['position']):
                         ranks[season][standing['teamId']] = standing['position']
-
         return ranks
 
     def get_scorer_table(self, league_code=None, teams=None, players=None, timeFrame=None, goals=False, assists=False):

@@ -147,7 +147,7 @@ class DataConnector(object):
                         teamData = self.get_team(homeId)
                         teamStandings[homeId]["teamName"] = teamData["name"]
                         teamStandings[homeId]["teamId"] = homeId
-                        teamStandings[homeId]["crest_url"] = teamData["crest_url"]
+                        teamStandings[homeId]["crest_url"] = teamData["crest_url"] if "crest_url" in teamData else None
 
                     teamStandings[homeId]["home"]["goals"] =                teamStandings[homeId]["home"]["goals"] + int(fixture["result"]["goalsHomeTeam"])
                     teamStandings[homeId]["home"]["goalsAgainst"] =         teamStandings[homeId]["home"]["goalsAgainst"] + int(fixture["result"]["goalsAwayTeam"])
@@ -176,7 +176,7 @@ class DataConnector(object):
                         teamData = self.get_team(awayId)
                         teamStandings[awayId]["teamName"] = teamData["name"]
                         teamStandings[awayId]["teamId"] = awayId
-                        teamStandings[awayId]["crest_url"] = teamData["crest_url"]
+                        teamStandings[awayId]["crest_url"] = teamData["crest_url"] if "crest_url" in teamData else None
                         
                     teamStandings[awayId]["away"]["goals"] =                teamStandings[awayId]["away"]["goals"] + int(fixture["result"]["goalsAwayTeam"])
                     teamStandings[awayId]["away"]["goalsAgainst"] =         teamStandings[awayId]["away"]["goalsAgainst"] + int(fixture["result"]["goalsHomeTeam"])

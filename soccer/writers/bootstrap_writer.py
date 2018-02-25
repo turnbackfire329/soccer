@@ -127,7 +127,7 @@ class BootstrapWriter(BasicWriter):
         html = html + "</tbody></table>"
         return html
 
-    def ranks_teams(self, ranks_of_teams, teams=None):
+    def ranks_teams(self, ranks_of_teams, teams=None, rank=None):
         if teams is None:
             return ""
 
@@ -154,8 +154,8 @@ class BootstrapWriter(BasicWriter):
         html = html + "</tbody></table>"
         return html
 
-    def rank_and_titles(self, rank_table, ranks_of_teams, teams=None):
-        rank_table_html = self.rank_table(rank_table, teams=teams)
+    def rank_and_titles(self, rank_table, ranks_of_teams, teams=None, rank=None):
+        rank_table_html = self.rank_table(rank_table, rank=rank, teams=teams)
         ranks_of_teams_html = self.ranks_teams(ranks_of_teams, teams=teams)
 
         random_id = random.randint(0, 99999)
@@ -163,6 +163,21 @@ class BootstrapWriter(BasicWriter):
         html = "<ul class='nav nav-tabs'><li class='active'><a data-toggle='tab' href='#seasons_" + str(random_id) + "'>Separate Seasons</a></li><li><a data-toggle='tab' href='#combinedtable_" + str(random_id) + "'>Combined Table</a></li></ul>"
         html = html + "<div class='tab-content'><div id='seasons_" + str(random_id) + "' class='tab-pane fade in active'><p>"
         html = html + ranks_of_teams_html
+        html = html + "</p></div><div id='combinedtable_" + str(random_id) + "' class='tab-pane fade'><p>"
+        html = html + rank_table_html
+        html = html + "</p></div></div>"
+
+        return html    
+    
+    def title_table_and_rank_table(self, title_table, rank_table, rank=None):
+        title_table_html = self.title_table(title_table)
+        rank_table_html =  self.rank_table(rank_table, rank=rank) 
+
+        random_id = random.randint(0, 99999)
+
+        html = "<ul class='nav nav-tabs'><li class='active'><a data-toggle='tab' href='#seasons_" + str(random_id) + "'>Separate Seasons</a></li><li><a data-toggle='tab' href='#combinedtable_" + str(random_id) + "'>Combined Table</a></li></ul>"
+        html = html + "<div class='tab-content'><div id='seasons_" + str(random_id) + "' class='tab-pane fade in active'><p>"
+        html = html + title_table_html
         html = html + "</p></div><div id='combinedtable_" + str(random_id) + "' class='tab-pane fade'><p>"
         html = html + rank_table_html
         html = html + "</p></div></div>"
