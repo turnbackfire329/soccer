@@ -14,6 +14,6 @@ class SoccerDBNotFoundException(Exception):
 
 class InvalidTimeFrameException(Exception):
     '''Raise when an invalid timeframe object was passed '''
-    def __init__(self, message, timeFrame, *args):
+    def __init__(self, message, timeframe, *args):
         self.message = message
-        super(InvalidTimeFrameException, self).__init__(message, timeFrame, *args)
+        super(InvalidTimeFrameException, self).__init__(message, timeframe, *args)

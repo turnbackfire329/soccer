@@ -35,7 +35,7 @@ class TMConnector(DataConnector):
             }
             self.logger.info(f"Mongo DB connection initialized")
 
-    def get_fixtures(self, league_code=None, teams=None, players=None, timeFrame=None, count=None, future=None, home=True, away=True):
+    def get_fixtures(self, league_code=None, teams=None, players=None, timeframe=None, count=None, future=None, home=True, away=True):
         if league_code is None and teams is None and players is None:
             return None
 
@@ -45,13 +45,19 @@ class TMConnector(DataConnector):
 
         if teams is not None:
             team_ids = self._get_team_ids_from_teams(teams)
-            findDict_team_or = []
-            if home == True:
-                findDict_team_or = findDict_team_or + [{ "homeTeam.team_id": { "$in": team_ids }}]
-            if away == True:
-                findDict_team_or = findDict_team_or + [{ "awayTeam.team_id": { "$in": team_ids }}]
+            findDict_team = {}
+            findDict_team_array = []
+            if len(team_ids) == 1:
+                if home == True:
+                    findDict_team_array = findDict_team_array + [{ "homeTeam.team_id": { "$in": team_ids }}]
+                if away == True:
+                    findDict_team_array = findDict_team_array + [{ "awayTeam.team_id": { "$in": team_ids }}]
+                findDict_team['$or'] = findDict_team_array
+            else:
+                findDict_team_array = [{ "homeTeam.team_id": { "$in": team_ids }}] + [{ "awayTeam.team_id": { "$in": team_ids }}]
+                findDict_team['$and'] = findDict_team_array
 
-            findDict["$and"] = [{"$or":findDict_team_or}]
+            findDict["$and"] = [findDict_team]
 
         if players is not None:
             player_ids = self._get_player_ids_from_players(players)
@@ -72,7 +78,7 @@ class TMConnector(DataConnector):
                                         ]
             findDict["$and"] = [{"$or":findDict_player_or}]
 
-        if timeFrame is None and count is not None:
+        if timeframe is None and count is not None:
             if future is True:
                 findDict["$and"].extend([
                     {"date":{ "$gte": datetime.datetime.now()}}, 
@@ -82,46 +88,46 @@ class TMConnector(DataConnector):
                     {"date":{ "$lte": datetime.datetime.now()}}, 
                 ])
         else:
-            timeFrame = self._check_timeFrame(timeFrame=timeFrame)
+            timeframe = self._check_timeframe(timeframe=timeframe)
 
-            if timeFrame["type"] == "date":
+            if timeframe["type"] == "date":
                 if "$and" in findDict:
                     findDict["$and"].extend([
-                        {"date":{ "$gte": timeFrame["date_from"]}}, 
-                        {"date":{ "$lte": timeFrame["date_to"]}},
+                        {"date":{ "$gte": timeframe["date_from"]}}, 
+                        {"date":{ "$lte": timeframe["date_to"]}},
                     ])
                 else: 
-                    findDict["$and"] = [{"date":{ "$gte": timeFrame["date_from"]}}, {"date":{ "$lte": timeFrame["date_to"]}}]
-            elif timeFrame["type"] == "season":
+                    findDict["$and"] = [{"date":{ "$gte": timeframe["date_from"]}}, {"date":{ "$lte": timeframe["date_to"]}}]
+            elif timeframe["type"] == "season":
                 if "$and" in findDict:
                     findDict["$and"].extend([
-                        {'season': {'$gte': timeFrame["season_from"]}},
-                        {'season': {'$lte': timeFrame["season_to"]}}
+                        {'season': {'$gte': timeframe["season_from"]}},
+                        {'season': {'$lte': timeframe["season_to"]}}
                     ])
                 else: 
-                    findDict["$and"] = [{'season': {'$gte': timeFrame["season_from"]}},{'season': {'$lte': timeFrame["season_to"]}}]
-            elif timeFrame["type"] == "matchday":
+                    findDict["$and"] = [{'season': {'$gte': timeframe["season_from"]}},{'season': {'$lte': timeframe["season_to"]}}]
+            elif timeframe["type"] == "matchday":
                 if "$and" in findDict:
                     findDict["$and"].extend([
-                        {'season': {'$gte': timeFrame["season_from"]}},
-                        {'season': {'$lte': timeFrame["season_to"]}},
+                        {'season': {'$gte': timeframe["season_from"]}},
+                        {'season': {'$lte': timeframe["season_to"]}},
                     ])
                 else: 
-                    findDict["$and"] = [{'season': {'$gte': timeFrame["season_from"]}},{'season': {'$lte': timeFrame["season_to"]}}]
+                    findDict["$and"] = [{'season': {'$gte': timeframe["season_from"]}},{'season': {'$lte': timeframe["season_to"]}}]
 
-                if timeFrame["season_from"] != timeFrame["season_to"]:
+                if timeframe["season_from"] != timeframe["season_to"]:
                     findMatchday = [{
-                        "$and": [{"season": { "$gt": timeFrame["season_from"]}}, {"season": { "$lt": timeFrame["season_to"]}}]
+                        "$and": [{"season": { "$gt": timeframe["season_from"]}}, {"season": { "$lt": timeframe["season_to"]}}]
                     },{
-                        "$and": [{"season": { "$eq": timeFrame["season_from"]}}, {"matchday": { "$gte": timeFrame["matchday_from"]}}]
+                        "$and": [{"season": { "$eq": timeframe["season_from"]}}, {"matchday": { "$gte": timeframe["matchday_from"]}}]
                     },{
-                        "$and": [{"season": { "$eq": timeFrame["season_to"]}}, {"matchday": { "$lte": timeFrame["matchday_to"]}}]
+                        "$and": [{"season": { "$eq": timeframe["season_to"]}}, {"matchday": { "$lte": timeframe["matchday_to"]}}]
                     }]
                     findDict["$and"].append({"$or":findMatchday})
                 else:
                     findDict["$and"].extend([
-                        {"matchday": { "$lte": timeFrame["matchday_to"]}},
-                        {"matchday": { "$gte": timeFrame["matchday_from"]}},
+                        {"matchday": { "$lte": timeframe["matchday_to"]}},
+                        {"matchday": { "$gte": timeframe["matchday_from"]}},
                     ])
 
         self.logger.debug(f"Looking for fixtures with the following findDict: {findDict}") 
@@ -136,14 +142,20 @@ class TMConnector(DataConnector):
 
         return fixtures
 
+    def get_team_by_seasons(self, team_id, seasons):
+        for season in seasons:
+            team_season = self.collections['team_season'].find_one({'team_id': team_id, 'competition.season': season})
+            if team_season is not None:
+                return team_season
+
     def get_team(self, team_id):
         return self.collections['teams'].find_one({'team_id':team_id})
 
     def get_player(self, player_id):
         return self.collections['players'].find_one({'player_id':player_id})
 
-    def get_table(self, league_code, teams=None, timeFrame=None):
-        timeFrame = self._check_timeFrame(timeFrame)
+    def get_table(self, league_code=None, teams=None, timeframe=None):
+        timeframe = self._check_timeframe(timeframe)
 
         if teams is not None:
             self.logger.debug(f"The following teams are given: {teams}")
@@ -154,14 +166,14 @@ class TMConnector(DataConnector):
         findDict = {
             "league_code": league_code,
             "teams": teams,
-            "timeFrame": timeFrame
+            "timeframe": timeframe
         }
         self.logger.debug(f"Looking for a table with the following findDict: {findDict}")  
 
         existingTable = self.collections["tables"].find_one({
             "league_code": league_code,
             "teams": teams,
-            "timeFrame": timeFrame
+            "timeframe": timeframe
         })
 
         if existingTable is None or (existingTable["status"] == self.TABLE_STATUS['pending'] and existingTable["next_update"] < datetime.datetime.now()):
@@ -169,13 +181,13 @@ class TMConnector(DataConnector):
             self.logger.debug(f"Table needs to be created") 
             if existingTable is not None and existingTable["status"] == self.TABLE_STATUS['pending']:
                 table_id = existingTable["_id"]
-            table = self.create_table(league_code, teams, timeFrame, table_id)
+            table = self.create_table(league_code, teams, timeframe, table_id)
             return table
         else:
             self.logger.debug(f"Table found in database") 
             return existingTable
 
-    def get_title_table(self, league_code, teams=None, timeFrame=None, rank=None):
+    def get_title_table(self, league_code, teams=None, timeframe=None, rank=None):
         if rank is None:
             rank = 0
         elif rank == 'won':
@@ -183,14 +195,14 @@ class TMConnector(DataConnector):
 
         title_table = {}
 
-        if timeFrame is None:
-            timeFrame = {
+        if timeframe is None:
+            timeframe = {
                 'type': 'season',
                 'season_from': 1900,
                 'season_to': get_current_season()
             }
 
-        seasons = self._get_seasons_from_timeframe(timeFrame)
+        seasons = self._get_seasons_from_timeframe(timeframe)
         for season in seasons:
             temp_timeframe = {
                 'type': 'season',
@@ -227,19 +239,19 @@ class TMConnector(DataConnector):
         return title_table
 
 
-    def create_table(self, league_code, teams=None, timeFrame=None, table_id=None):
+    def create_table(self, league_code, teams=None, timeframe=None, table_id=None):
         self.logger.debug(f"Creating table ...") 
-        timeFrame = self._check_timeFrame(timeFrame)
-        self.logger.debug(f"Loading fixtures from timeframe {timeFrame}") 
+        timeframe = self._check_timeframe(timeframe)
+        self.logger.debug(f"Loading fixtures from timeframe {timeframe}") 
         competition = self.get_competition(league_code)
         if competition is None:
             tie_break_rules = DEFAULT_TIE_BREAK_RULES
         else:
             tie_break_rules = competition['metadata']['tie_break_rules']
 
-        point_rule = self._get_point_rule_from_timeframe(competition, timeFrame)
+        point_rule = self._get_point_rule_from_timeframe(competition, timeframe)
 
-        fixtures = self.get_fixtures(league_code=league_code, teams=teams, timeFrame=timeFrame)
+        fixtures = self.get_fixtures(league_code=league_code, teams=teams, timeframe=timeframe)
 
         self.logger.debug(f"Found {len(fixtures)} fixtures")
 
@@ -267,7 +279,7 @@ class TMConnector(DataConnector):
         table = {
             "league_code": league_code,
             "teams": teams,
-            "timeFrame": timeFrame,
+            "timeframe": timeframe,
             "standings": standings,
             "status": table_status,
             "next_update": next_update,
@@ -301,18 +313,18 @@ class TMConnector(DataConnector):
     def get_competition(self, league_code):
         return self.collections["competitions"].find_one({'league_code': league_code})
 
-    def get_ranks_of_teams(self, league_code, timeFrame, teams=None, rank=None):
+    def get_ranks_of_teams(self, league_code, timeframe, teams=None, rank=None):
         ranks = {}
         team_ids = self._get_team_ids_from_teams(teams)
 
-        if timeFrame is None:
-            timeFrame = {
+        if timeframe is None:
+            timeframe = {
                 'type': 'season',
                 'season_from': 1900,
                 'season_to': get_current_season()
             }
 
-        seasons = self._get_seasons_from_timeframe(timeFrame)
+        seasons = self._get_seasons_from_timeframe(timeframe)
 
         for season in seasons:
             temp_timeframe = {
@@ -331,12 +343,12 @@ class TMConnector(DataConnector):
                         ranks[season][standing['teamId']] = standing['position']
         return ranks
 
-    def get_scorer_table(self, league_code=None, teams=None, players=None, timeFrame=None, goals=False, assists=False):
+    def get_scorer_table(self, league_code=None, teams=None, players=None, timeframe=None, goals=False, assists=False):
         if league_code is None and players is None and teams is None:
             return None
     
-        timeFrame = self._check_timeFrame(timeFrame)
-        fixtures = self.get_fixtures(league_code=league_code, teams=teams, players=players, timeFrame=timeFrame)
+        timeframe = self._check_timeframe(timeframe)
+        fixtures = self.get_fixtures(league_code=league_code, teams=teams, players=players, timeframe=timeframe)
         score_table = self.compute_scorer_table(fixtures, players=players, goals=goals, assists=assists)
         return score_table
 

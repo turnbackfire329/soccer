@@ -27,7 +27,7 @@ class BasicWriter(object):
             print("No fixtures found")
         print(fixtures)   
 
-    def ranks_teams(self, ranks_of_teams):
+    def ranks_of_teams(self, ranks_of_teams):
         pass
 
     def rank_and_titles(self, rank_table, ranks_of_teams, teams=None):

@@ -49,6 +49,14 @@ def test_compute_goal_table():
     scorer_table = dc.compute_scorer_table(fixtures, goals=True, assists=True)
     assert len(scorer_table) == 3
 
+def test_get_seasons_from_timeframe():
+    timeframe = {
+        "type": "date",
+        "date_from": datetime.datetime.strptime("2011-01-01", '%Y-%m-%d'),
+        "date_to": datetime.datetime.strptime("2014-01-01", '%Y-%m-%d'),
+    }
+    assert range(2010,2013) == dc._get_seasons_from_timeframe(timeframe)
+
 def test_season_date():
     assert soccer.util.get_season_from_date(datetime.date(2015,4,29)) == 2014
 

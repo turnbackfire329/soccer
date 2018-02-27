@@ -34,18 +34,21 @@ class DataConnector(object):
     def get_competition(self, league_code):
         pass
     
-    def get_fixtures(self, league_code=None, teams=None, players=None, timeFrame=None, count=None, future=None, home=True, away=True):
+    def get_fixtures(self, league_code=None, teams=None, players=None, timeframe=None, count=None, future=None, home=True, away=True):
         pass
 
-    def get_ranks_of_teams(self, league_code, teams, timeFrame):
+    def get_ranks_of_teams(self, league_code, teams, timeframe):
         pass
 
-    def get_team(self, team_id):
+    def get_team(self, team_id): 
         return {
             "team_id": team_id,
             "name": "Team " + str(team_id),
             "crest_url": "https://commons.wikimedia.org/wiki/File:Borussia_Dortmund_logo.svg"
         }
+
+    def get_team_by_timeframe(self, team_id, timeframe):
+        pass
 
     def get_player(self, player_id):
         return {
@@ -132,6 +135,8 @@ class DataConnector(object):
                 teamStandings[team] = deepcopy(EMPTY_TEAM_STANDINGS)
                 teamData = self.get_team(team)
                 teamStandings[team]["teamName"] = teamData["name"]
+                teamStandings[team]["teamId"] = team
+                teamStandings[team]["crest_url"] = teamData["crest_url"] if "crest_url" in teamData else None
         else:
             team_ids = None
 
@@ -329,17 +334,17 @@ class DataConnector(object):
 
         return scorer_table
 
-    def _get_seasons_from_timeframe(self, timeFrame):
-        timeFrame = self._check_timeFrame(timeFrame)
+    def _get_seasons_from_timeframe(self, timeframe):
+        timeframe = self._check_timeframe(timeframe)
 
-        if timeFrame["type"] == 'season' or timeFrame["type"] == 'matchday':
-            return range(timeFrame['season_from'], timeFrame['season_to'] + 1)
+        if timeframe["type"] == 'season' or timeframe["type"] == 'matchday':
+            return range(timeframe['season_from'], timeframe['season_to'] + 1)
         else:
-            return range(timeFrame['date_from'].year, timeFrame['date_to'].year + 1)
+            return range(timeframe['date_from'].year - 1, timeframe['date_to'].year - 1)
 
 
-    def _get_point_rule_from_timeframe(self, competition, timeFrame):
-        seasons = self._get_seasons_from_timeframe(timeFrame)
+    def _get_point_rule_from_timeframe(self, competition, timeframe):
+        seasons = self._get_seasons_from_timeframe(timeframe)
         point_rule = None
         
         if competition is None:
@@ -377,35 +382,35 @@ class DataConnector(object):
    
         return DEFAULT_POINT_RULE
 
-    def _check_timeFrame(self, timeFrame=None):
+    def _check_timeframe(self, timeframe=None):
         bValid = False
 
-        if timeFrame is None:
+        if timeframe is None:
             current_season = str(get_current_season())
-            timeFrame = {
+            timeframe = {
                 "type": "season",
                 "season_from": current_season,
                 "season_to": current_season
             }
             bValid = True
-        elif "type" in timeFrame:
-            timeFrameType = timeFrame["type"]
+        elif "type" in timeframe:
+            timeframeType = timeframe["type"]
 
-            if timeFrameType in self.TIME_FRAME_TYPES:
-                if timeFrameType == "date":
-                    if "date_from" in timeFrame and "date_to" in timeFrame:
+            if timeframeType in self.TIME_FRAME_TYPES:
+                if timeframeType == "date":
+                    if "date_from" in timeframe and "date_to" in timeframe:
                         bValid = True
-                elif timeFrameType == "season":
-                    if "season_from" in timeFrame and "season_to" in timeFrame:
+                elif timeframeType == "season":
+                    if "season_from" in timeframe and "season_to" in timeframe:
                         bValid = True
-                elif timeFrameType == "matchday":
-                    if "season_from" in timeFrame and "season_to" in timeFrame and "matchday_from" in timeFrame and "matchday_to" in timeFrame:
+                elif timeframeType == "matchday":
+                    if "season_from" in timeframe and "season_to" in timeframe and "matchday_from" in timeframe and "matchday_to" in timeframe:
                         bValid = True
         
         if bValid == False:
-            raise InvalidTimeFrameException(f"Invalid time frame given: {timeFrame}", timeFrame)
+            raise InvalidTimeFrameException(f"Invalid time frame given: {timeframe}", timeframe)
         else:
-            return timeFrame
+            return timeframe
 
     def _break_ties(self, standings, start_index, end_index, fixtures, point_rule, tie_break_rules, tie_break_rule_index=0):
         upcoming_h2h = False
@@ -535,4 +540,3 @@ class DataConnector(object):
         if players is None or not isinstance(players, list):
             return []
         return [player['player_id'] for player in players]
-

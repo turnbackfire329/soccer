@@ -1,6 +1,8 @@
 """ Bootstrap writer """
 import logging
 import random
+import hashlib
+from hashlib import md5
 from soccer.writers import BasicWriter
 from ..util import POINT_RULES, DEFAULT_POINT_RULE_DISPLAY_NEGATIVE_POINTS, season_to_string
 
@@ -127,7 +129,7 @@ class BootstrapWriter(BasicWriter):
         html = html + "</tbody></table>"
         return html
 
-    def ranks_teams(self, ranks_of_teams, teams=None, rank=None):
+    def ranks_of_teams(self, ranks_of_teams, teams=None, rank=None):
         if teams is None:
             return ""
 
@@ -156,7 +158,7 @@ class BootstrapWriter(BasicWriter):
 
     def rank_and_titles(self, rank_table, ranks_of_teams, teams=None, rank=None):
         rank_table_html = self.rank_table(rank_table, rank=rank, teams=teams)
-        ranks_of_teams_html = self.ranks_teams(ranks_of_teams, teams=teams)
+        ranks_of_teams_html = self.ranks_of_teams(ranks_of_teams, teams=teams)
 
         random_id = random.randint(0, 99999)
 
@@ -207,7 +209,46 @@ class BootstrapWriter(BasicWriter):
 
         html = html + "</tbody></table>"
         return html
-    
+
+    def multi_table(self, tables, teams=None, rank=None):
+        random_id = str(random.randint(0, 99999))
+        html = "<ul class='nav nav-tabs'>"
+
+        for idx, (key, data) in enumerate(tables.items()):
+            data['id'] = md5(data['name'].encode('utf-8')).hexdigest() + "_" + random_id
+            if idx == 0:
+                html = html + f"<li class='active'><a data-toggle='tab' href='#{data['id']}'>{data['name']}</a></li>"
+            else:
+                html = html + f"<li><a data-toggle='tab' href='#{data['id']}'>{data['name']}</a></li>"
+
+        html = html + "</ul><div class='tab-content'>"
+
+        for idx, (key, data) in enumerate(tables.items()):
+            table = data['table']
+
+            if idx == 0:
+                html = html + f"<div id='{data['id']}' class='tab-pane fade in active'><p>"
+            else:
+                html = html + f"<div id='{data['id']}' class='tab-pane fade'><p>"
+
+            if key == "league_table":
+                table_html = self.league_table(table)
+            elif key == "rank_table":
+                table_html = self.rank_table(table, teams=teams, rank=rank)
+            elif key == "title_table":
+                table_html = self.title_table(table)
+            elif key == "ranks_of_teams":
+                table_html = self.ranks_of_teams(table, teams=teams, rank=rank)
+            elif key == "h2h_table":
+                table_html = self.league_table(table)
+            else:
+                table_html = self.league_table(table)
+            
+            html = html + table_html + "</p></div>"
+
+        html = html + "</div>"
+        return html
+
     def assist_table(self, assist_table, player=None):
         if assist_table is None:
             return ""
