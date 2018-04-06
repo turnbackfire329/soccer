@@ -162,7 +162,7 @@ class BootstrapWriter(BasicWriter):
 
         random_id = random.randint(0, 99999)
 
-        html = "<ul class='nav nav-tabs'><li class='active'><a data-toggle='tab' href='#seasons_" + str(random_id) + "'>Separate Seasons</a></li><li><a data-toggle='tab' href='#combinedtable_" + str(random_id) + "'>Combined Table</a></li></ul>"
+        html = "<ul class='nav nav-tabs'><li class='nav-item active'><a data-toggle='tab' href='#seasons_" + str(random_id) + "'>Separate Seasons</a></li><li class='nav-item'><a data-toggle='tab' href='#combinedtable_" + str(random_id) + "'>Combined Table</a></li></ul>"
         html = html + "<div class='tab-content'><div id='seasons_" + str(random_id) + "' class='tab-pane fade in active'><p>"
         html = html + ranks_of_teams_html
         html = html + "</p></div><div id='combinedtable_" + str(random_id) + "' class='tab-pane fade'><p>"
@@ -177,7 +177,7 @@ class BootstrapWriter(BasicWriter):
 
         random_id = random.randint(0, 99999)
 
-        html = "<ul class='nav nav-tabs'><li class='active'><a data-toggle='tab' href='#seasons_" + str(random_id) + "'>Separate Seasons</a></li><li><a data-toggle='tab' href='#combinedtable_" + str(random_id) + "'>Combined Table</a></li></ul>"
+        html = "<ul class='nav nav-tabs'><li class='nav-item active'><a data-toggle='tab' href='#seasons_" + str(random_id) + "'>Separate Seasons</a></li><li class='nav-item'><a data-toggle='tab' href='#combinedtable_" + str(random_id) + "'>Combined Table</a></li></ul>"
         html = html + "<div class='tab-content'><div id='seasons_" + str(random_id) + "' class='tab-pane fade in active'><p>"
         html = html + title_table_html
         html = html + "</p></div><div id='combinedtable_" + str(random_id) + "' class='tab-pane fade'><p>"
@@ -217,9 +217,9 @@ class BootstrapWriter(BasicWriter):
         for idx, (key, data) in enumerate(tables.items()):
             data['id'] = md5(data['name'].encode('utf-8')).hexdigest() + "_" + random_id
             if idx == 0:
-                html = html + f"<li class='active'><a data-toggle='tab' href='#{data['id']}'>{data['name']}</a></li>"
+                html = html + f"<li class='nav-item active'><a data-toggle='tab' href='#{data['id']}'>{data['name']}</a></li>"
             else:
-                html = html + f"<li><a data-toggle='tab' href='#{data['id']}'>{data['name']}</a></li>"
+                html = html + f"<li class='nav-item'><a data-toggle='tab' href='#{data['id']}'>{data['name']}</a></li>"
 
         html = html + "</ul><div class='tab-content'>"
 

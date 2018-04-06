@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="soccer",
-    version="0.0.1",
+    version="0.0.2",
     url="https://github.com/hhllcks/soccer",
 
     author="Hendrik Hilleckes",
