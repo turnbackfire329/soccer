@@ -163,7 +163,7 @@ class BootstrapWriter(BasicWriter):
         random_id = random.randint(0, 99999)
 
         html = "<ul class='nav nav-tabs'><li class='nav-item'><a class='nav-link active show' data-toggle='tab' href='#seasons_" + str(random_id) + "'>Separate Seasons</a></li><li class='nav-item'><a class='nav-link' data-toggle='tab' href='#combinedtable_" + str(random_id) + "'>Combined Table</a></li></ul>"
-        html = html + "<div class='tab-content'><div id='seasons_" + str(random_id) + "' class='tab-pane fade in active'><p>"
+        html = html + "<div class='tab-content'><div id='seasons_" + str(random_id) + "' class='tab-pane fade in active show'><p>"
         html = html + ranks_of_teams_html
         html = html + "</p></div><div id='combinedtable_" + str(random_id) + "' class='tab-pane fade'><p>"
         html = html + rank_table_html
@@ -178,7 +178,7 @@ class BootstrapWriter(BasicWriter):
         random_id = random.randint(0, 99999)
 
         html = "<ul class='nav nav-tabs'><li class='nav-item'><a class='nav-link active show' data-toggle='tab' href='#seasons_" + str(random_id) + "'>Separate Seasons</a></li><li class='nav-item'><a class='nav-link' data-toggle='tab' href='#combinedtable_" + str(random_id) + "'>Combined Table</a></li></ul>"
-        html = html + "<div class='tab-content'><div id='seasons_" + str(random_id) + "' class='tab-pane fade in active'><p>"
+        html = html + "<div class='tab-content'><div id='seasons_" + str(random_id) + "' class='tab-pane fade in active show'><p>"
         html = html + title_table_html
         html = html + "</p></div><div id='combinedtable_" + str(random_id) + "' class='tab-pane fade'><p>"
         html = html + rank_table_html
@@ -227,7 +227,7 @@ class BootstrapWriter(BasicWriter):
             table = data['table']
 
             if idx == 0:
-                html = html + f"<div id='{data['id']}' class='tab-pane fade in active'><p>"
+                html = html + f"<div id='{data['id']}' class='tab-pane fade in active show'><p>"
             else:
                 html = html + f"<div id='{data['id']}' class='tab-pane fade'><p>"
 
